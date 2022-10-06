@@ -1,0 +1,32 @@
+{
+  "name": "awesome-readme",
+  "version": "0.0.1",
+  "description": "Build awesome readme easily",
+  "bin": {
+    "awesome-readme": "./index.ts"
+  },
+  "main": "index.js",
+  "browser": "./standalone.js",
+  "unpkg": "./standalone.js",
+  "scripts": {
+    "awesome-readme": "node ./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marc-aurele-besner/awesome-readme.git"
+  },
+  "keywords": [
+    "readme-generator",
+    "readme",
+    "readme-builder"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marc-aurele-besner/awesome-readme/issues"
+  },
+  "homepage": "https://github.com/marc-aurele-besner/awesome-readme#readme",
+  "dependencies": {
+    "fs": "^0.0.1-security"
+  }
+}
