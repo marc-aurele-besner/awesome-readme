@@ -3,9 +3,23 @@
 const fs = require("fs")
 const path = require("path")
 
-const buildReadme = (currentPath = path.resolve()) => {
+const buildReadme = require("./buildReadme");
+
+const buildMainReadme = (currentPath = path.resolve()) => {
     // const currentPath = path.resolve();
 
+    // verjft the repository value of package.json
+    const packageJson = fs.readFileSync("package.json", "utf8");
+    const packageJsonData = JSON.parse(packageJson);
+    const repository = packageJsonData.repository;
+    const repositoryName = packageJsonData.name;
+    let repositoryUrl = '';
+    if (typeof(repository) === 'string')
+        repositoryUrl = repository;
+    else if (typeof(repository) === 'object') {
+        repositoryUrl = repository.url.substring(4);
+        repositoryUrl = repositoryUrl.substring(0, repositoryUrl.length - 4);
+    }
     // List of all the files in the current directory
     let files = fs.readdirSync(currentPath);
 
@@ -25,7 +39,8 @@ const buildReadme = (currentPath = path.resolve()) => {
 
     let directoryFileList = '';
     let currentFilesList = '';
-    let directoryTree = `\`\`\``;
+    let directoryTree = `\`\`\`\n`;
+    let subDirectoryTree = [];
 
     // identify if the files are directories or files
     const fileTypes = files.map(file => {
@@ -34,6 +49,8 @@ const buildReadme = (currentPath = path.resolve()) => {
         if (stats.isDirectory()) {
             directory.push(file);
             directoryFileList += ` - [${file}/](./${file}/)\r`
+            const addToTree = buildReadme(filePath + '/', file, '', '[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)', '', repositoryUrl, '   ');
+            subDirectoryTree += addToTree;
         } else {
             currentFiles.push(file);
             currentFilesList += ` - [${file}](./${file})\r`
@@ -46,15 +63,10 @@ const buildReadme = (currentPath = path.resolve()) => {
     directory.forEach(element => {
         directoryTree += `└─── ${element}/\n`
     });
-    directoryTree += `\`\`\``
-    console.log("File types:");
-    console.log(fileTypes);
-    console.log("directory:");
-    console.log(directory);
-    console.log("currentFiles:");
-    console.log(currentFiles);
+    directoryTree += subDirectoryTree + `\`\`\``
+    const buildReadmeData = `
+[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)
 
-    const buildReadme = `
 # Awesome-Readme
 \`\`\`
 .d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b 
@@ -67,13 +79,9 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 \`\`\`
 ${directoryFileList ? "## Directories\n" + directoryFileList + "\n" : ""}
 ${currentFilesList ? currentFilesList : ""}
-${directoryTree ? "## Directory Tree\n" + directoryTree : ""}
+${directoryTree ? "## Directory Tree\n" + repositoryName + '\n' + directoryTree : ""}
 `
-
-    // Write README.md file
-
-    fs.writeFileSync(currentPath + "/README.md", buildReadme);
-
+    fs.writeFileSync(currentPath + "/README.md", buildReadmeData);
 }
 
-module.exports = buildReadme()
+module.exports = buildMainReadme()
