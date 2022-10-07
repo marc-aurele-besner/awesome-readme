@@ -1,3 +1,3 @@
 #!/usr/bin/env node
 
-module.exports = require("./src/standalone.js");
+module.exports = require('./src/standalone.js');

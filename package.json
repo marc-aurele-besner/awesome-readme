@@ -1,34 +1,34 @@
 {
-  "name": "awesome-readme",
-  "version": "0.0.3",
-  "description": "Build awesome readme easily",
-  "bin": {
-    "awesome-readme": "src/index.js"
-  },
-  "main": "index.js",
-  "browser": "./standalone.js",
-  "engines": {
-    "node": ">=10"
-  },
-  "scripts": {
-    "awesome-readme": "node ./index.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/marc-aurele-besner/awesome-readme.git"
-  },
-  "keywords": [
-    "readme-generator",
-    "readme",
-    "readme-builder"
-  ],
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/marc-aurele-besner/awesome-readme/issues"
-  },
-  "homepage": "https://github.com/marc-aurele-besner/awesome-readme#readme",
-  "dependencies": {
-    "fs": "^0.0.1-security"
-  }
+    "name": "awesome-readme",
+    "version": "0.0.4",
+    "description": "Build awesome readme easily",
+    "bin": {
+        "awesome-readme": "src/index.js"
+    },
+    "main": "index.js",
+    "browser": "./standalone.js",
+    "engines": {
+        "node": ">=10"
+    },
+    "scripts": {
+        "awesome-readme": "node ./index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/marc-aurele-besner/awesome-readme.git"
+    },
+    "keywords": [
+        "readme-generator",
+        "readme",
+        "readme-builder"
+    ],
+    "author": "",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/marc-aurele-besner/awesome-readme/issues"
+    },
+    "homepage": "https://github.com/marc-aurele-besner/awesome-readme#readme",
+    "dependencies": {
+        "fs": "^0.0.1-security"
+    }
 }
