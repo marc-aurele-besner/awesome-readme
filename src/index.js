@@ -20,16 +20,23 @@ d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D
 88   88 '8b d8'8b d8' 88.     db   8D '8b  d8' 88  88  88 88.            88 '88. 88.     88   88 88  .8D 88  88  88 88.     
 YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P 
 \`\`\``
+
+    console.log('\x1b[32m', figlet, '\x1b[0m');
     // verify if awesome-readme.config.js exists
     if (fs.existsSync("awesome-readme.config.js")) {
         // if exists, read the file
         const config = require(path.resolve("awesome-readme.config.js"));
-        // if the config file has a figlet property, use it
-        figlet = config.figlet ? config.figlet : figlet;
+        if (config.figlet) {
+            figlet = config.figlet
+            console.log('\x1b[33m', 'Using your figlet', '\x1b[34m', config.figlet)
+        }
     }
     let repositoryUrl = '';
     if (typeof(repository) === 'string')
-        repositoryUrl = repository;
+        if (repository.startsWith('git+'))
+            repositoryUrl = repository.replace('git+', '').replace('.git', '');
+        else
+            repositoryUrl = repository;
     else if (typeof(repository) === 'object') {
         repositoryUrl = repository.url.substring(4);
         repositoryUrl = repositoryUrl.substring(0, repositoryUrl.length - 4);
@@ -52,7 +59,7 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 
     let directoryFileList = '';
     let currentFilesList = '';
-    let directoryTree = `\`\`\`\n` + repositoryName + '\n';
+    let directoryTree = `\`\`\`\n` + repositoryName + '/\n';
     let subDirectoryTree = [];
 
     // identify if the files are directories or files
@@ -62,7 +69,7 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
         if (stats.isDirectory()) {
             directory.push(file);
             directoryFileList += ` - [${file}/](./${file}/)\r`
-            const addToTree = buildReadme(filePath + '/', repositoryName + ' / ' + file, figlet, '[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)', '', repositoryUrl, '   ');
+            const addToTree = buildReadme(file, filePath + '/', repositoryName + ' / ' + file, figlet, '[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)', '', repositoryUrl, '   ');
             subDirectoryTree += addToTree;
             let subDirectoryFiles = fs.readdirSync(filePath + '/');
             if (subDirectoryFiles.length > 0)
@@ -70,7 +77,7 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
                     const subDirectoryPath = path.resolve(filePath + '/' + subDirectoryFile);
                     const subDirectoryPathStats = fs.statSync(subDirectoryPath);
                     if (subDirectoryPathStats.isDirectory()) {
-                        buildReadme(filePath + '/' + subDirectoryFile + '/', repositoryName + ' / ' + file + ' / ' + subDirectoryFile, figlet, '[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)', '', repositoryUrl, '   ');
+                        buildReadme(subDirectoryFile, filePath + '/' + subDirectoryFile + '/', repositoryName + ' / ' + file + ' / ' + subDirectoryFile, figlet, '[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)', '', repositoryUrl, '   ');
                         
                     }
                 })
@@ -97,6 +104,7 @@ ${currentFilesList ? currentFilesList : ""}
 ${directoryTree ? "## Directory Tree\n" + directoryTree : ""}
 `
     fs.writeFileSync(currentPath + "/README.md", buildReadmeData);
+    console.log('\x1b[32m%s\x1b[0m', 'README.md created in ' + currentPath, '\x1b[0m');
 }
 
 module.exports = buildMainReadme()

@@ -1,6 +1,7 @@
 const fs = require("fs")
 
 const buildReadme = (
+    file,
     currentPath,
     title,
     figlet,
@@ -54,9 +55,10 @@ ${figlet}
 ${description ? description : ''}
 ${directoryFileList ? "## Directories\n" + directoryFileList + "\n" : ""}
 ${currentFilesList ? currentFilesList : ""}
-${directoryTree ? "## Directory Tree\n[<- Previous](" + repositoryUrl + ")\n" + title + '\n' + directoryTree : ""}
+${directoryTree ? "## Directory Tree\n[<- Previous](" + repositoryUrl + ")\n" + file + '/\n' + directoryTree : ""}
 `
         fs.writeFileSync(currentPath + "/README.md", buildReadme);
+        console.log('\x1b[32m%s\x1b[0m', 'README.md created in ' + currentPath, '\x1b[0m');
         return directoryTree
     }
 }
