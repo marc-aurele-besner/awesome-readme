@@ -1,13 +1,15 @@
 {
   "name": "awesome-readme",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Build awesome readme easily",
   "bin": {
-    "awesome-readme": "./index.ts"
+    "awesome-readme": "src/index.js"
   },
   "main": "index.js",
   "browser": "./standalone.js",
-  "unpkg": "./standalone.js",
+  "engines": {
+    "node": ">=10"
+  },
   "scripts": {
     "awesome-readme": "node ./index.js"
   },

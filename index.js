@@ -1,3 +1,3 @@
-"use strict";
+#!/usr/bin/env node
 
 module.exports = require("./src/index.js");
