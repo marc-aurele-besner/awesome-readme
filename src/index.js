@@ -11,6 +11,13 @@ const buildMainReadme = (currentPath = path.resolve()) => {
     const packageJsonData = JSON.parse(packageJson);
     const repository = packageJsonData.repository;
     const repositoryName = packageJsonData.name;
+    const repositoryLicensee = packageJsonData.license;
+    let extraData = {
+        root_license: '',
+        root_header: '',
+        root_body: '',
+        root_footer: ''
+    }
     let figlet = `
 \`\`\`
 .d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b 
@@ -30,6 +37,10 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
             figlet = config.figlet;
             console.log('\x1b[33m', 'Using your figlet', '\x1b[34m', config.figlet);
         }
+        if (config.root_license) extraData.root_license = config.root_license;
+        if (config.root_header) extraData.root_header = config.root_header;
+        if (config.root_body) extraData.root_body = config.root_body;
+        if (config.root_footer) extraData.root_footer = config.root_footer;
     }
     let repositoryUrl = '';
     if (typeof repository === 'string')
@@ -72,7 +83,7 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
                 filePath + '/',
                 repositoryName + ' / ' + file,
                 figlet,
-                '[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)',
+                `[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})`,
                 '',
                 repositoryUrl,
                 '   '
@@ -89,7 +100,7 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
                             filePath + '/' + subDirectoryFile + '/',
                             repositoryName + ' / ' + file + ' / ' + subDirectoryFile,
                             figlet,
-                            '[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)',
+                            `[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})`,
                             '',
                             repositoryUrl,
                             '   '
@@ -98,7 +109,7 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
                 });
         } else {
             currentFiles.push(file);
-            currentFilesList += ` - [${file}](./${file})\r`;
+            currentFilesList += ` - [${file}](./${file})\n`;
         }
         return { file, type: stats.isDirectory() ? 'directory' : 'file' };
     });
@@ -110,13 +121,17 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
     });
     directoryTree += subDirectoryTree + `\`\`\``;
     const buildReadmeData = `
-[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)
+[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})
+${extraData.root_license}
 
-# Awesome-Readme
+# ${repositoryName}
 ${figlet}
+${extraData.root_header}
 ${directoryFileList ? '## Directories\n' + directoryFileList + '\n' : ''}
 ${currentFilesList ? currentFilesList : ''}
+${extraData.root_body}
 ${directoryTree ? '## Directory Tree\n' + directoryTree : ''}
+${extraData.root_footer}
 `;
     fs.writeFileSync(currentPath + '/README.md', buildReadmeData);
     console.log('\x1b[32m%s\x1b[0m', 'README.md created in ' + currentPath, '\x1b[0m');
