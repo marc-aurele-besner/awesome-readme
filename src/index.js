@@ -34,7 +34,10 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
         // if exists, read the file
         const config = require(path.resolve('awesome-readme.config.js'));
         if (config.figlet) {
-            figlet = config.figlet;
+            figlet = `
+\`\`\`
+${config.figlet}
+\`\`\``;
             console.log('\x1b[33m', 'Using your figlet', '\x1b[34m', config.figlet);
         }
         if (config.root_license) extraData.root_license = config.root_license;
