@@ -117,7 +117,7 @@ ${config.figlet}
         return { file, type: stats.isDirectory() ? 'directory' : 'file' };
     });
     currentFiles.forEach((element) => {
-        directoryTree += `│   ${element}/\n`;
+        directoryTree += `│   ${element}\n`;
     });
     directory.forEach((element) => {
         directoryTree += `└─── ${element}/\n`;
