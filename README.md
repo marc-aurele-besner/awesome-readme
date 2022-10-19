@@ -79,20 +79,20 @@ module.exports = {
 ## Directory Tree
 ```
 awesome-readme/
-│   .npmignore/
-│   .prettierignore/
-│   .prettierrc/
-│   awesome-readme.config.js/
-│   CONTRIBUTING.md/
-│   index.js/
-│   LICENSE/
-│   package-lock.json/
-│   package.json/
-│   README.md/
-│   standalone.js/
+│   .npmignore
+│   .prettierignore
+│   .prettierrc
+│   awesome-readme.config.js
+│   CONTRIBUTING.md
+│   index.js
+│   LICENSE
+│   package-lock.json
+│   package.json
+│   README.md
+│   standalone.js
 └─── src/
-   │   buildReadme.js/
-   │   index.js/
-   │   README.md/
+   │   buildReadme.js
+   │   index.js
+   │   README.md
 ```
 ## Don't hesitate to contribute to this project.
