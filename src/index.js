@@ -16,7 +16,10 @@ const buildMainReadme = (currentPath = path.resolve()) => {
     root_license: '',
     root_header: '',
     root_body: '',
-    root_footer: ''
+    root_footer: '',
+    ignore_gitFiles: true,
+    ignore_gitIgnoreFiles: true,
+    ignore_files: []
   };
   let figlet = `
 \`\`\`
@@ -44,6 +47,9 @@ ${config.figlet}
     if (config.root_header) extraData.root_header = config.root_header;
     if (config.root_body) extraData.root_body = config.root_body;
     if (config.root_footer) extraData.root_footer = config.root_footer;
+    if (config.ignore_gitFiles !== undefined) extraData.ignore_gitFiles = config.ignore_gitFiles;
+    if (config.ignore_gitIgnoreFiles !== undefined) extraData.ignore_gitIgnoreFiles = config.ignore_gitIgnoreFiles;
+    if (config.ignore_files !== undefined && config.ignore_files.length > 0) extraData.ignore_files = config.ignore_files;
   }
   let repositoryUrl = '';
   if (typeof repository === 'string')
@@ -58,13 +64,22 @@ ${config.figlet}
 
   // Detect if a .gitignore file exists
   const gitignoreExists = files.includes('.gitignore');
-  if (gitignoreExists) {
+  if (gitignoreExists && extraData.ignore_gitIgnoreFiles) {
+    console.log('\x1b[33m', 'Using .gitignore to ignore files', '\x1b[0m');
     // List the files and patterns in the .gitignore file
     const gitignore = fs.readFileSync('.gitignore', 'utf8');
     // filter out the files in the current directory that are in the .gitignore file
     files = files.filter((file) => !gitignore.includes(file));
+  }
+  if (extraData.ignore_gitFiles) {
+    console.log('\x1b[33m', 'Ignoring .git files', '\x1b[0m');
     // ignore any file that starts with a .git
     files = files.filter((file) => !file.startsWith('.git'));
+  }
+  if (gitignoreExists && extraData.ignore_gitIgnoreFiles) {
+    console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
+    // filter out the files in the current directory that are in the ignore_files array
+    files = files.filter((file) => !extraData.ignore_files.includes(file));
   }
   const directory = [];
   const currentFiles = [];
@@ -89,7 +104,8 @@ ${config.figlet}
         `[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})`,
         '',
         repositoryUrl,
-        '   '
+        '   ',
+        extraData
       );
       subDirectoryTree += addToTree;
       let subDirectoryFiles = fs.readdirSync(filePath + '/');
@@ -106,7 +122,8 @@ ${config.figlet}
               `[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})`,
               '',
               repositoryUrl,
-              '   '
+              '   ',
+              extraData
             );
           }
         });

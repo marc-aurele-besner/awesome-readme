@@ -1,15 +1,17 @@
 const fs = require('fs');
 
-const buildReadme = (file, currentPath, title, figlet, licenseBadge, description, repositoryUrl, prefix = '') => {
+const buildReadme = (file, currentPath, title, figlet, licenseBadge, description, repositoryUrl, prefix = '', extraData) => {
   if (currentPath) {
     let files = fs.readdirSync(currentPath);
 
     // Detect if a .gitignore file exists
-    if (files.includes('.gitignore')) {
+    if (files.includes('.gitignore') && extraData.ignore_gitIgnoreFiles) {
       // List the files and patterns in the .gitignore file
       const gitignore = fs.readFileSync('.gitignore', 'utf8');
       // filter out the files in the current directory that are in the .gitignore file
       files = files.filter((file) => !gitignore.includes(file));
+    }
+    if (extraData.ignore_gitFiles) {
       // ignore any file that starts with a .git
       files = files.filter((file) => !file.startsWith('.git'));
     }
