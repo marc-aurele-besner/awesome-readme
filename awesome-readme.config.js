@@ -51,9 +51,15 @@ module.exports = {
     npx awesome-readme
     \`\`\`\`,
     root_body: \`## Configuration with awesome-readme.config.js\`,
-    root_footer: \`## Don't hesitate to contribute to this project.\`
+    root_footer: \`## Don't hesitate to contribute to this project.\`,
+    ignore_gitFiles: true,
+    ignore_gitIgnoreFiles: true,
+    ignore_files: ['.prettierignore']
 }
 \`\`\`
 `,
-  root_footer: `## Don't hesitate to contribute to this project.`
+  root_footer: `## Don't hesitate to contribute to this project.`,
+  ignore_gitFiles: true,
+  ignore_gitIgnoreFiles: true,
+  ignore_files: ['.prettierignore']
 };
