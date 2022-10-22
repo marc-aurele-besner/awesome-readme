@@ -37,7 +37,6 @@ npx awesome-readme
  - [src/](./src/)
 
  - [.npmignore](./.npmignore)
- - [.prettierignore](./.prettierignore)
  - [.prettierrc](./.prettierrc)
  - [awesome-readme.config.js](./awesome-readme.config.js)
  - [CONTRIBUTING.md](./CONTRIBUTING.md)
@@ -72,7 +71,10 @@ module.exports = {
     npx awesome-readme
     ````,
     root_body: `## Configuration with awesome-readme.config.js`,
-    root_footer: `## Don't hesitate to contribute to this project.`
+    root_footer: `## Don't hesitate to contribute to this project.`,
+    ignore_gitFiles: true,
+    ignore_gitIgnoreFiles: true,
+    ignore_files: ['.prettierignore']
 }
 ```
 
@@ -80,7 +82,6 @@ module.exports = {
 ```
 awesome-readme/
 │   .npmignore
-│   .prettierignore
 │   .prettierrc
 │   awesome-readme.config.js
 │   CONTRIBUTING.md
