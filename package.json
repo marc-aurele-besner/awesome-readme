@@ -6,23 +6,32 @@
     "awesome-readme": "src/index.js"
   },
   "main": "index.js",
+  "typings": "dist/index",
   "browser": "./standalone.js",
   "engines": {
     "node": ">=10"
   },
   "scripts": {
-    "awesome-readme": "node ./index.js"
+    "awesome-readme": "node ./index.js",
+    "lint:fix": "prettier --write src/**/*.{js,ts}"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marc-aurele-besner/awesome-readme.git"
   },
+  "types": "dist/src/index.d.ts",
   "keywords": [
     "readme-generator",
     "readme",
     "readme-builder"
   ],
-  "author": "",
+  "files": [
+    "dist/",
+    "src/",
+    "LICENSE",
+    "README.md"
+  ],
+  "author": "Marc-Aurele Besner <82244926+marc-aurele-besner@users.noreply.github.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/marc-aurele-besner/awesome-readme/issues"
@@ -32,6 +41,10 @@
     "fs": "^0.0.1-security"
   },
   "devDependencies": {
-    "prettier": "^2.7.1"
+    "@types/eslint": "^8.4.7",
+    "@types/node": "^18.11.3",
+    "eslint": "^8.26.0",
+    "prettier": "^2.7.1",
+    "typescript": "^4.8.4"
   }
 }
