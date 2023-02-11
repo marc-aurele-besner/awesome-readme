@@ -41,10 +41,10 @@
     "fs": "^0.0.1-security"
   },
   "devDependencies": {
-    "@types/eslint": "^8.4.10",
-    "@types/node": "^18.11.18",
-    "eslint": "^8.33.0",
-    "prettier": "^2.8.3",
+    "@types/eslint": "^8.21.0",
+    "@types/node": "^18.13.0",
+    "eslint": "^8.34.0",
+    "prettier": "^2.8.4",
     "typescript": "^4.9.5"
   }
 }
