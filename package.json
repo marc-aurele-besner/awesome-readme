@@ -41,7 +41,7 @@
     "fs": "^0.0.1-security"
   },
   "devDependencies": {
-    "@types/eslint": "^8.21.0",
+    "@types/eslint": "^9.0.0",
     "@types/node": "^20.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
