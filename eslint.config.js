@@ -28,28 +28,5 @@ module.exports = [
       'no-empty': 0,
       'no-extra-semi': 0
     }
-  },
-  {
-    files: ['src/**/*.ts'],
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        require: 'readonly',
-        process: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        console: 'readonly'
-      }
-    },
-    rules: {
-      'no-console': 0,
-      'no-unused-vars': 0,
-      'no-undef': 0,
-      'no-debugger': 0,
-      'no-alert': 0,
-      'no-empty': 0,
-      'no-extra-semi': 0
-    }
   }
 ];
