@@ -1,6 +1,6 @@
 {
   "name": "awesome-readme",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "Build awesome readme easily",
   "bin": {
     "awesome-readme": "dist/index.js"
