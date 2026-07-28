@@ -76,7 +76,7 @@ ${config.figlet}
     // ignore any file that starts with a .git
     files = files.filter((file) => !file.startsWith('.git'));
   }
-  if (gitignoreExists && extraData.ignore_gitIgnoreFiles) {
+  if (extraData.ignore_files.length > 0) {
     console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
     // filter out the files in the current directory that are in the ignore_files array
     files = files.filter((file) => !extraData.ignore_files.includes(file));
