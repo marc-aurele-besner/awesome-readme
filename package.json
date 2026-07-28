@@ -44,6 +44,7 @@
     "fs": "^0.0.1-security"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.0",
     "@types/eslint": "^8.21.0",
     "@types/node": "^24.0.0",
     "eslint": "^10.0.0",
