@@ -19,6 +19,7 @@
     "lint:fix": "prettier --write \"src/**/*.{js,ts}\"",
     "format:check": "prettier --check \"src/**/*.{js,ts}\"",
     "build": "tsc",
+    "test": "npm run build && node --test test/",
     "prepublishOnly": "npm run build"
   },
   "repository": {

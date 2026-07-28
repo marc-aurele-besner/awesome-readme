@@ -2,7 +2,7 @@
 [![license](https://img.shields.io/github/license/marc-aurele-besner/awesome-readme.svg)](https://opensource.org/licenses/MIT)
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-# awesome-readme / src
+# awesome-readme / test
 
 ```
 
@@ -16,16 +16,13 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 
 ## About this directory
 
- - [README.md](./README.md) - [buildReadme.ts](./buildReadme.ts) - [filterFiles.ts](./filterFiles.ts) - [index.ts](./index.ts) - [types.ts](./types.ts)
+ - [README.md](./README.md) - [filterFiles.test.js](./filterFiles.test.js)
 This directory is part of the awesome-readme project.
 ## Directory Tree
 [<- Previous](https://github.com/marc-aurele-besner/awesome-readme)
 ```
-src/
+test/
    │   README.md
-   │   buildReadme.ts
-   │   filterFiles.ts
-   │   index.ts
-   │   types.ts
+   │   filterFiles.test.js
 ```
 ## Don't hesitate to contribute to this project.

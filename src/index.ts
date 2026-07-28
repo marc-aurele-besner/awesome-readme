@@ -6,6 +6,7 @@ import * as path from 'path';
 import figletLib from 'figlet';
 
 import buildReadme from './buildReadme';
+import { listFilteredFiles } from './filterFiles';
 import type { ExtraData } from './types';
 
 const buildMainReadme = (currentPath: string = path.resolve()): void => {
@@ -106,28 +107,15 @@ ${rendered}
   const licenseBadge = repositorySlug
     ? `[![license](https://img.shields.io/github/license/${repositorySlug}.svg)](https://opensource.org/licenses/${repositoryLicensee})`
     : '';
-  // List of all the files in the current directory
-  let files = fs.readdirSync(currentPath);
-
-  // Detect if a .gitignore file exists
-  const gitignoreExists = files.includes('.gitignore');
-  if (gitignoreExists && extraData.ignore_gitIgnoreFiles) {
+  // List of all the files in the current directory, with the shared ignore
+  // rules applied. The same helper is used for every subdirectory walk so a
+  // file ignored here cannot reappear in a sub-README or subdirectory tree.
+  if (extraData.ignore_gitIgnoreFiles && fs.existsSync(path.join(currentPath, '.gitignore')))
     console.log('\x1b[33m', 'Using .gitignore to ignore files', '\x1b[0m');
-    // List the files and patterns in the .gitignore file
-    const gitignore = fs.readFileSync('.gitignore', 'utf8');
-    // filter out the files in the current directory that are in the .gitignore file
-    files = files.filter((file) => !gitignore.includes(file));
-  }
-  if (extraData.ignore_gitFiles) {
-    console.log('\x1b[33m', 'Ignoring .git files', '\x1b[0m');
-    // ignore any file that starts with a .git
-    files = files.filter((file) => !file.startsWith('.git'));
-  }
-  if (extraData.ignore_files.length > 0) {
-    console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
-    // filter out the files in the current directory that are in the ignore_files array
-    files = files.filter((file) => !extraData.ignore_files.includes(file));
-  }
+  if (extraData.ignore_gitFiles) console.log('\x1b[33m', 'Ignoring .git files', '\x1b[0m');
+  if (extraData.ignore_files.length > 0) console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
+
+  const files = listFilteredFiles(currentPath, extraData);
   const directory: string[] = [];
   const currentFiles: string[] = [];
   // Map each subdirectory name to its rendered tree text so it can be nested
@@ -147,7 +135,9 @@ ${rendered}
       directoryFileList += ` - [${file}/](./${file}/)\r`;
       const addToTree = buildReadme(file, filePath + '/', repositoryName + ' / ' + file, figlet, licenseBadge, '', repositoryUrl, '   ', extraData);
       subDirectoryTreeMap[file] = addToTree ?? '';
-      let subDirectoryFiles = fs.readdirSync(filePath + '/');
+      // Second-level walk: filter here too, otherwise an ignored directory
+      // would still get a README generated for it.
+      const subDirectoryFiles = listFilteredFiles(filePath + '/', extraData);
       if (subDirectoryFiles.length > 0)
         subDirectoryFiles.map((subDirectoryFile) => {
           const subDirectoryPath = path.resolve(filePath + '/' + subDirectoryFile);

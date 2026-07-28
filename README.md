@@ -34,7 +34,7 @@ npx awesome-readme
 ```
 
 ## Directories
- - [.vscode/](./.vscode/) - [src/](./src/)
+ - [.vscode/](./.vscode/) - [src/](./src/) - [test/](./test/)
 
  - [.npmignore](./.npmignore)
  - [.prettierrc](./.prettierrc)
@@ -105,10 +105,14 @@ awesome-readme/
 │   │   README.md
 │   │   extensions.json
 │   │   settings.json
-└─── src/
+├─── src/
+│   │   README.md
+│   │   buildReadme.ts
+│   │   filterFiles.ts
+│   │   index.ts
+│   │   types.ts
+└─── test/
     │   README.md
-    │   buildReadme.ts
-    │   index.ts
-    │   types.ts
+    │   filterFiles.test.js
 ```
 ## Don't hesitate to contribute to this project.
