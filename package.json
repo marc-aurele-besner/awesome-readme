@@ -14,7 +14,7 @@
   },
   "scripts": {
     "awesome-readme": "node ./dist/index.js",
-    "lint": "eslint src/**/*.js",
+    "lint": "eslint --no-error-on-unmatched-pattern 'src/**/*.js'",
     "typecheck": "tsc --noEmit",
     "lint:fix": "prettier --write \"src/**/*.{js,ts}\"",
     "format:check": "prettier --check \"src/**/*.{js,ts}\"",
