@@ -72,6 +72,10 @@ module.exports = {
     ````,
     root_body: `## Configuration with awesome-readme.config.js`,
     root_footer: `## Don't hesitate to contribute to this project.`,
+    sub_license: `[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)`,
+    sub_header: `## About this directory`,
+    sub_body: `This directory is part of the awesome-readme project.`,
+    sub_footer: `## Don't hesitate to contribute to this project.`,
     ignore_gitFiles: true,
     ignore_gitIgnoreFiles: true,
     ignore_files: ['.prettierignore']

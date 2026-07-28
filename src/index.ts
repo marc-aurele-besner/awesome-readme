@@ -18,6 +18,10 @@ const buildMainReadme = (currentPath: string = path.resolve()): void => {
     root_header: '',
     root_body: '',
     root_footer: '',
+    sub_license: '',
+    sub_header: '',
+    sub_body: '',
+    sub_footer: '',
     ignore_gitFiles: true,
     ignore_gitIgnoreFiles: true,
     ignore_files: []
@@ -49,6 +53,10 @@ ${config.figlet}
     if (config.root_header) extraData.root_header = config.root_header;
     if (config.root_body) extraData.root_body = config.root_body;
     if (config.root_footer) extraData.root_footer = config.root_footer;
+    if (config.sub_license) extraData.sub_license = config.sub_license;
+    if (config.sub_header) extraData.sub_header = config.sub_header;
+    if (config.sub_body) extraData.sub_body = config.sub_body;
+    if (config.sub_footer) extraData.sub_footer = config.sub_footer;
     if (config.ignore_gitFiles !== undefined) extraData.ignore_gitFiles = config.ignore_gitFiles;
     if (config.ignore_gitIgnoreFiles !== undefined) extraData.ignore_gitIgnoreFiles = config.ignore_gitIgnoreFiles;
     if (config.ignore_files !== undefined && config.ignore_files.length > 0) extraData.ignore_files = config.ignore_files;

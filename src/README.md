@@ -1,7 +1,7 @@
 
 [![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)
 
-
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 # awesome-readme / src
 
 ```
@@ -14,8 +14,10 @@ d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D
 YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P 
 ```
 
+## About this directory
 
  - [README.md](./README.md) - [buildReadme.ts](./buildReadme.ts) - [index.ts](./index.ts) - [types.ts](./types.ts)
+This directory is part of the awesome-readme project.
 ## Directory Tree
 [<- Previous](https://github.com/marc-aurele-besner/awesome-readme)
 ```
@@ -25,3 +27,4 @@ src/
    │   index.ts
    │   types.ts
 ```
+## Don't hesitate to contribute to this project.
