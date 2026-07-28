@@ -45,7 +45,8 @@
   "homepage": "https://github.com/marc-aurele-besner/awesome-readme#readme",
   "dependencies": {
     "figlet": "^1.11.4",
-    "fs": "^0.0.1-security"
+    "fs": "^0.0.1-security",
+    "ignore": "^5.3.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
