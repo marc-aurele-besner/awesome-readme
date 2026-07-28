@@ -13,7 +13,10 @@
   },
   "scripts": {
     "awesome-readme": "node ./index.js",
-    "lint:fix": "prettier --write src/**/*.{js,ts}"
+    "lint": "eslint src/",
+    "lint:fix": "prettier --write src/**/*.{js,ts}",
+    "format:check": "prettier --check \"src/**/*.{js,ts}\"",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
