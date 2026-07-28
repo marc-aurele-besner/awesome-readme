@@ -16,18 +16,19 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 
 ## About this directory
 
- - [README.md](./README.md) - [buildReadme.ts](./buildReadme.ts) - [cli.ts](./cli.ts) - [filterFiles.ts](./filterFiles.ts) - [index.ts](./index.ts) - [types.ts](./types.ts) - [writeReadme.ts](./writeReadme.ts)
+ - [README.md](./README.md) - [buildReadme.ts](./buildReadme.ts) - [cli.ts](./cli.ts) - [filterFiles.ts](./filterFiles.ts) - [index.ts](./index.ts) - [tree.ts](./tree.ts) - [types.ts](./types.ts) - [writeReadme.ts](./writeReadme.ts)
 This directory is part of the awesome-readme project.
 ## Directory Tree
 [<- Previous](https://github.com/marc-aurele-besner/awesome-readme)
 ```
 src/
-   │   README.md
-   │   buildReadme.ts
-   │   cli.ts
-   │   filterFiles.ts
-   │   index.ts
-   │   types.ts
-   │   writeReadme.ts
+   ├─── README.md
+   ├─── buildReadme.ts
+   ├─── cli.ts
+   ├─── filterFiles.ts
+   ├─── index.ts
+   ├─── tree.ts
+   ├─── types.ts
+   └─── writeReadme.ts
 ```
 ## Don't hesitate to contribute to this project.

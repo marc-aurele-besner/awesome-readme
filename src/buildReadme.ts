@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 
 import { listFilteredFiles } from './filterFiles';
+import { renderTreeRows, type TreeEntry } from './tree';
 import type { ExtraData } from './types';
 import { writeReadmeFile, type ReadmeWriteMode } from './writeReadme';
 
@@ -22,31 +23,23 @@ const buildReadme = (
     // Shared with the root walk so `ignore_files`, `.git*` and `.gitignore`
     // rules are applied consistently at every depth.
     const files = listFilteredFiles(currentPath, extraData);
-    const directory: string[] = [];
-    const currentFiles: string[] = [];
+    const entries: TreeEntry[] = files.map((name) => {
+      const filePath = currentPath + '/' + name;
+      const stats = fs.statSync(filePath);
+      return { name, isDirectory: stats.isDirectory() };
+    });
 
     let directoryFileList = '';
     let currentFilesList = '';
-    let directoryTree = '';
-
-    // identify if the files are directories or files
-    files.map((file) => {
-      const filePath = currentPath + '/' + file;
-      const stats = fs.statSync(filePath);
-      if (stats.isDirectory()) {
-        directory.push(file);
-        directoryFileList += ` - [${file}/](./${file}/)\r`;
-      } else {
-        currentFiles.push(file);
-        currentFilesList += ` - [${file}](./${file})\r`;
-      }
+    entries.forEach((entry) => {
+      if (entry.isDirectory) directoryFileList += ` - [${entry.name}/](./${entry.name}/)\r`;
+      else currentFilesList += ` - [${entry.name}](./${entry.name})\r`;
     });
-    currentFiles.forEach((element) => {
-      directoryTree += '   ' + `│   ${element}\n`;
-    });
-    directory.forEach((element) => {
-      directoryTree += '   ' + `└─── ${element}/\n`;
-    });
+    // Subdirectory children are rendered with `├───`/`└───` connectors and
+    // indented one level under the parent (`prefix`), so the tree still
+    // looks like a proper tree when it is read on its own in the sub-README.
+    const treeLines = renderTreeRows(entries).map((line) => `${prefix}${line}`);
+    const directoryTree = treeLines.join('\n');
     const directoryTreePrefix = `\`\`\`\n${file}/\n`;
     const directoryTreeSuffix = `\`\`\``;
     const buildReadme = `
@@ -58,7 +51,7 @@ ${extraData.sub_header}
 ${directoryFileList ? '## Directories\n' + directoryFileList + '\n' : ''}
 ${currentFilesList ? currentFilesList : ''}
 ${extraData.sub_body}
-${directoryTree ? '## Directory Tree\n[<- Previous](' + repositoryUrl + ')\n' + directoryTreePrefix + directoryTree + directoryTreeSuffix : ''}
+${directoryTree ? '## Directory Tree\n[<- Previous](' + repositoryUrl + ')\n' + directoryTreePrefix + directoryTree + '\n' + directoryTreeSuffix : ''}
 ${extraData.sub_footer}
 `;
     writeReadmeFile(currentPath, buildReadme, mode);

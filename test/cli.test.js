@@ -180,3 +180,99 @@ test('an unknown flag exits non-zero and prints the usage', () => {
   assert.match(stderr, /Usage: awesome-readme/);
   assert.ok(usage.includes('--root-only'));
 });
+
+// Regression coverage for #82: the subdirectory tree used to render every
+// directory entry as `└───`, and the root tree mixed files with the
+// continuation column. The generator now shares one tree renderer between
+// the root and subdirectory paths, so the two layouts have to stay in sync.
+test('subdirectory trees use the same connectors and last-child rule as the root tree', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-tree-'));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+  // Two files at the root plus two subdirectories, so the root tree has a
+  // non-last and a last directory entry.
+  fs.writeFileSync(path.join(root, 'README.md'), '');
+  fs.writeFileSync(path.join(root, 'LICENSE'), '');
+  fs.mkdirSync(path.join(root, 'alpha'));
+  fs.mkdirSync(path.join(root, 'beta'));
+  fs.writeFileSync(path.join(root, 'alpha', 'a.txt'), '');
+  fs.writeFileSync(path.join(root, 'beta', 'b.txt'), '');
+
+  try {
+    captureOutput(() => main(['--path', root]));
+
+    const rootReadme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    // Root tree: two non-last directory connectors and one last child.
+    assert.match(rootReadme, /├─── alpha\//);
+    assert.match(rootReadme, /└─── beta\//);
+    // Subtree lines under a non-last directory use the `│   ` continuation
+    // column so the parent's connector column continues.
+    assert.match(rootReadme, /│   └─── a\.txt/);
+
+    const alphaReadme = fs.readFileSync(path.join(root, 'alpha', 'README.md'), 'utf8');
+    // Subdirectory tree: a single file is the last child, so it uses
+    // `└───` (and the previous code wrongly used `└───` for every entry).
+    assert.match(alphaReadme, /└─── a\.txt/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Snapshot-style assertion: locks the expected ASCII tree for the canonical
+// layout (files followed by directories, subtrees inlined under their
+// parent). Locks both the root README and the subdirectory README so the
+// two paths cannot drift apart again.
+test('generated trees match the issue #82 fixture', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-snapshot-'));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+  fs.writeFileSync(path.join(root, 'README.md'), '');
+  fs.mkdirSync(path.join(root, 'docs'));
+  fs.mkdirSync(path.join(root, 'src'));
+  fs.writeFileSync(path.join(root, 'docs', 'notes.md'), '');
+
+  const extractTree = (readme) => {
+    // The root README has the figlet code block then the tree block; the
+    // subdirectory README has a `[<- Previous](url)` link line between the
+    // `## Directory Tree` heading and the tree's fence. Anchor on the
+    // heading and grab the last fenced block, which is always the tree.
+    const blocks = readme.match(/```\n[\s\S]*?\n```/g);
+    if (!blocks || blocks.length === 0) return '';
+    const treeBlock = blocks[blocks.length - 1];
+    // Strip the surrounding fences.
+    return treeBlock.replace(/^```\n/, '').replace(/\n```$/, '');
+  };
+
+  try {
+    captureOutput(() => main(['--path', root]));
+
+    const rootTree = extractTree(fs.readFileSync(path.join(root, 'README.md'), 'utf8'));
+    const expectedRootTree = [
+      'demo/',
+      '├─── README.md',
+      '└─── package.json',
+      '├─── docs/',
+      '│   └─── notes.md',
+      '└─── src/'
+    ].join('\n');
+    assert.strictEqual(rootTree, expectedRootTree);
+
+    const docsTree = extractTree(fs.readFileSync(path.join(root, 'docs', 'README.md'), 'utf8'));
+    const expectedDocsTree = ['docs/', '   └─── notes.md'].join('\n');
+    assert.strictEqual(docsTree, expectedDocsTree);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

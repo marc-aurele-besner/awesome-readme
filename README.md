@@ -116,31 +116,33 @@ module.exports = {
 ## Directory Tree
 ```
 awesome-readme/
-│   .npmignore
-│   .prettierrc
-│   CONTRIBUTING.md
-│   LICENSE
-│   README.md
-│   awesome-readme.config.js
-│   eslint.config.js
-│   package-lock.json
-│   package.json
-│   tsconfig.json
+├─── .npmignore
+├─── .prettierrc
+├─── CONTRIBUTING.md
+├─── LICENSE
+├─── README.md
+├─── awesome-readme.config.js
+├─── eslint.config.js
+├─── package-lock.json
+├─── package.json
+└─── tsconfig.json
 ├─── .vscode/
-│   │   README.md
-│   │   extensions.json
-│   │   settings.json
+│   ├─── README.md
+│   ├─── extensions.json
+│   └─── settings.json
 ├─── src/
-│   │   README.md
-│   │   buildReadme.ts
-│   │   cli.ts
-│   │   filterFiles.ts
-│   │   index.ts
-│   │   types.ts
-│   │   writeReadme.ts
+│   ├─── README.md
+│   ├─── buildReadme.ts
+│   ├─── cli.ts
+│   ├─── filterFiles.ts
+│   ├─── index.ts
+│   ├─── tree.ts
+│   ├─── types.ts
+│   └─── writeReadme.ts
 └─── test/
-    │   README.md
-    │   cli.test.js
-    │   filterFiles.test.js
+    ├─── README.md
+    ├─── cli.test.js
+    ├─── filterFiles.test.js
+    └─── tree.test.js
 ```
 ## Don't hesitate to contribute to this project.
