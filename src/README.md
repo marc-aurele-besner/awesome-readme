@@ -1,5 +1,5 @@
 
-[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/MIT)
+[![license](https://img.shields.io/github/license/marc-aurele-besner/awesome-readme.svg)](https://opensource.org/licenses/MIT)
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 # awesome-readme / src
