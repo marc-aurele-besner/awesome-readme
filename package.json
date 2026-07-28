@@ -3,26 +3,28 @@
   "version": "0.0.8",
   "description": "Build awesome readme easily",
   "bin": {
-    "awesome-readme": "src/index.js"
+    "awesome-readme": "dist/index.js"
   },
-  "main": "index.js",
-  "typings": "dist/index",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "browser": "./standalone.js",
   "engines": {
     "node": ">=10"
   },
   "scripts": {
-    "awesome-readme": "node ./index.js",
-    "lint": "eslint src/",
-    "lint:fix": "prettier --write src/**/*.{js,ts}",
+    "awesome-readme": "node ./dist/index.js",
+    "lint": "eslint src/**/*.js",
+    "typecheck": "tsc --noEmit",
+    "lint:fix": "prettier --write \"src/**/*.{js,ts}\"",
     "format:check": "prettier --check \"src/**/*.{js,ts}\"",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marc-aurele-besner/awesome-readme.git"
   },
-  "types": "dist/src/index.d.ts",
   "keywords": [
     "readme-generator",
     "readme",
