@@ -15,12 +15,13 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 ```
 
 
- - [buildReadme.js](./buildReadme.js) - [index.js](./index.js) - [README.md](./README.md)
+ - [README.md](./README.md) - [buildReadme.ts](./buildReadme.ts) - [index.ts](./index.ts) - [types.ts](./types.ts)
 ## Directory Tree
 [<- Previous](https://github.com/marc-aurele-besner/awesome-readme)
 ```
 src/
-   │   buildReadme.js
-   │   index.js
    │   README.md
+   │   buildReadme.ts
+   │   index.ts
+   │   types.ts
 ```

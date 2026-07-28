@@ -1,6 +1,17 @@
-const fs = require('fs');
+import * as fs from 'fs';
+import type { ExtraData } from './types';
 
-const buildReadme = (file, currentPath, title, figlet, licenseBadge, description, repositoryUrl, prefix = '', extraData) => {
+const buildReadme = (
+  file: string,
+  currentPath: string,
+  title: string,
+  figlet: string,
+  licenseBadge: string,
+  description: string,
+  repositoryUrl: string,
+  prefix = '',
+  extraData: ExtraData
+): string | undefined => {
   if (currentPath) {
     let files = fs.readdirSync(currentPath);
 
@@ -15,8 +26,8 @@ const buildReadme = (file, currentPath, title, figlet, licenseBadge, description
       // ignore any file that starts with a .git
       files = files.filter((file) => !file.startsWith('.git'));
     }
-    const directory = [];
-    const currentFiles = [];
+    const directory: string[] = [];
+    const currentFiles: string[] = [];
 
     let directoryFileList = '';
     let currentFilesList = '';
@@ -57,4 +68,4 @@ ${directoryTree ? '## Directory Tree\n[<- Previous](' + repositoryUrl + ')\n' + 
   }
 };
 
-module.exports = buildReadme;
+export default buildReadme;

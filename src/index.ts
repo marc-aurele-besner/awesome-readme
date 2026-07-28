@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'fs';
+import * as path from 'path';
 
-const buildReadme = require('./buildReadme');
+import buildReadme from './buildReadme';
+import type { ExtraData } from './types';
 
-const buildMainReadme = (currentPath = path.resolve()) => {
+const buildMainReadme = (currentPath: string = path.resolve()): void => {
   // verjft the repository value of package.json
   const packageJson = fs.readFileSync('package.json', 'utf8');
   const packageJsonData = JSON.parse(packageJson);
-  const repository = packageJsonData.repository;
-  const repositoryName = packageJsonData.name;
-  const repositoryLicensee = packageJsonData.license;
-  let extraData = {
+  const repository: string | { url: string } = packageJsonData.repository;
+  const repositoryName: string = packageJsonData.name;
+  const repositoryLicensee: string = packageJsonData.license;
+  const extraData: ExtraData = {
     root_license: '',
     root_header: '',
     root_body: '',
@@ -23,18 +24,19 @@ const buildMainReadme = (currentPath = path.resolve()) => {
   };
   let figlet = `
 \`\`\`
-.d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b 
-d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D 88'     d8' '8b 88  '8D 88'YbdP'88 88'     
-88ooo88 88   I8I   88 88ooooo '8bo.   88    88 88  88  88 88ooooo        88oobY' 88ooooo 88ooo88 88   88 88  88  88 88ooooo 
-88~~~88 Y8   I8I   88 88~~~~~   'Y8b. 88    88 88  88  88 88~~~~~ C8888D 88'8b   88~~~~~ 88~~~88 88   88 88  88  88 88~~~~~ 
-88   88 '8b d8'8b d8' 88.     db   8D '8b  d8' 88  88  88 88.            88 '88. 88.     88   88 88  .8D 88  88  88 88.     
-YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P 
+.d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b
+d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D 88'     d8' '8b 88  '8D 88'YbdP'88 88'
+88ooo88 88   I8I   88 88ooooo '8bo.   88    88 88  88  88 88ooooo        88oobY' 88ooooo 88ooo88 88   88 88  88  88 88ooooo
+88~~~88 Y8   I8I   88 88~~~~~   'Y8b. 88    88 88  88  88 88~~~~~ C8888D 88'8b   88~~~~~ 88~~~88 88   88 88  88  88 88~~~~~
+88   88 '8b d8'8b d8' 88.     db   8D '8b  d8' 88  88  88 88.            88 '88. 88.     88   88 88  .8D 88  88  88 88.
+YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P
 \`\`\``;
 
   console.log('\x1b[32m', figlet, '\x1b[0m');
   // verify if awesome-readme.config.js exists
   if (fs.existsSync('awesome-readme.config.js')) {
     // if exists, read the file
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const config = require(path.resolve('awesome-readme.config.js'));
     if (config.figlet) {
       figlet = `
@@ -81,11 +83,11 @@ ${config.figlet}
     // filter out the files in the current directory that are in the ignore_files array
     files = files.filter((file) => !extraData.ignore_files.includes(file));
   }
-  const directory = [];
-  const currentFiles = [];
+  const directory: string[] = [];
+  const currentFiles: string[] = [];
   // Map each subdirectory name to its rendered tree text so it can be nested
   // under that directory in the parent tree instead of being dumped at the bottom.
-  const subDirectoryTreeMap = {};
+  const subDirectoryTreeMap: Record<string, string> = {};
 
   let directoryFileList = '';
   let currentFilesList = '';
@@ -109,7 +111,7 @@ ${config.figlet}
         '   ',
         extraData
       );
-      subDirectoryTreeMap[file] = addToTree;
+      subDirectoryTreeMap[file] = addToTree ?? '';
       let subDirectoryFiles = fs.readdirSync(filePath + '/');
       if (subDirectoryFiles.length > 0)
         subDirectoryFiles.map((subDirectoryFile) => {
@@ -174,4 +176,4 @@ ${extraData.root_footer}
   console.log('\x1b[32m%s\x1b[0m', 'README.md created in ' + currentPath, '\x1b[0m');
 };
 
-module.exports = buildMainReadme();
+buildMainReadme();

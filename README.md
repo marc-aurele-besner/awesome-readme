@@ -34,18 +34,18 @@ npx awesome-readme
 ```
 
 ## Directories
- - [src/](./src/)
+ - [.vscode/](./.vscode/) - [src/](./src/)
 
  - [.npmignore](./.npmignore)
  - [.prettierrc](./.prettierrc)
- - [awesome-readme.config.js](./awesome-readme.config.js)
  - [CONTRIBUTING.md](./CONTRIBUTING.md)
- - [index.js](./index.js)
  - [LICENSE](./LICENSE)
+ - [README.md](./README.md)
+ - [awesome-readme.config.js](./awesome-readme.config.js)
+ - [eslint.config.js](./eslint.config.js)
  - [package-lock.json](./package-lock.json)
  - [package.json](./package.json)
- - [README.md](./README.md)
- - [standalone.js](./standalone.js)
+ - [tsconfig.json](./tsconfig.json)
 
 
     
@@ -83,17 +83,21 @@ module.exports = {
 awesome-readme/
 │   .npmignore
 │   .prettierrc
-│   awesome-readme.config.js
 │   CONTRIBUTING.md
-│   index.js
 │   LICENSE
+│   README.md
+│   awesome-readme.config.js
+│   eslint.config.js
 │   package-lock.json
 │   package.json
-│   README.md
-│   standalone.js
+│   tsconfig.json
+├─── .vscode/
+│   │   extensions.json
+│   │   settings.json
 └─── src/
-   │   buildReadme.js
-   │   index.js
-   │   README.md
+    │   README.md
+    │   buildReadme.ts
+    │   index.ts
+    │   types.ts
 ```
 ## Don't hesitate to contribute to this project.
