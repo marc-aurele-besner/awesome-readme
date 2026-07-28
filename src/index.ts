@@ -6,12 +6,32 @@ import * as path from 'path';
 import figletLib from 'figlet';
 
 import buildReadme from './buildReadme';
+import { parseCliOptions, usage, type CliOptions } from './cli';
 import { listFilteredFiles } from './filterFiles';
 import type { ExtraData } from './types';
+import { writeReadmeFile, type ReadmeWriteMode } from './writeReadme';
 
-const buildMainReadme = (currentPath: string = path.resolve()): void => {
-  // verjft the repository value of package.json
-  const packageJson = fs.readFileSync('package.json', 'utf8');
+const DEFAULT_CONFIG_FILE = 'awesome-readme.config.js';
+
+export type BuildOptions = Omit<CliOptions, 'help'>;
+
+const buildMainReadme = (options: Partial<BuildOptions> = {}): void => {
+  // Everything is resolved against the requested root instead of the process
+  // cwd so `--path` can point at any directory.
+  const currentPath = path.resolve(options.path ?? '.');
+  const dryRun = options.dryRun === true;
+  const rootOnly = options.rootOnly === true;
+  const rootMode: ReadmeWriteMode = dryRun ? 'dry-run' : 'write';
+  // `--root-only` still walks subdirectories because the root directory tree is
+  // built from their listings; it just never emits their READMEs.
+  const subMode: ReadmeWriteMode = rootOnly ? 'skip' : rootMode;
+
+  if (!fs.existsSync(currentPath) || !fs.statSync(currentPath).isDirectory()) throw new Error(`Project path not found: ${currentPath}`);
+
+  // verify the repository value of package.json
+  const packageJsonPath = path.join(currentPath, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) throw new Error(`No package.json found in ${currentPath}`);
+  const packageJson = fs.readFileSync(packageJsonPath, 'utf8');
   const packageJsonData = JSON.parse(packageJson);
   const repository: string | { url: string } = packageJsonData.repository;
   const repositoryName: string = packageJsonData.name;
@@ -40,11 +60,13 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 \`\`\``;
 
   console.log('\x1b[32m', figlet, '\x1b[0m');
-  // verify if awesome-readme.config.js exists
-  if (fs.existsSync('awesome-readme.config.js')) {
+  // An explicit `--config` must exist; the default file stays optional.
+  const configPath = options.config ? path.resolve(options.config) : path.join(currentPath, DEFAULT_CONFIG_FILE);
+  if (options.config && !fs.existsSync(configPath)) throw new Error(`Config file not found: ${configPath}`);
+  if (fs.existsSync(configPath)) {
     // if exists, read the file
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const config = require(path.resolve('awesome-readme.config.js'));
+    const config = require(configPath);
     if (config.figlet) {
       figlet = `
 \`\`\`
@@ -128,12 +150,12 @@ ${rendered}
 
   // identify if the files are directories or files
   files.map((file) => {
-    const filePath = path.resolve(file);
+    const filePath = path.resolve(currentPath, file);
     const stats = fs.statSync(filePath);
     if (stats.isDirectory()) {
       directory.push(file);
       directoryFileList += ` - [${file}/](./${file}/)\r`;
-      const addToTree = buildReadme(file, filePath + '/', repositoryName + ' / ' + file, figlet, licenseBadge, '', repositoryUrl, '   ', extraData);
+      const addToTree = buildReadme(file, filePath + '/', repositoryName + ' / ' + file, figlet, licenseBadge, '', repositoryUrl, '   ', extraData, subMode);
       subDirectoryTreeMap[file] = addToTree ?? '';
       // Second-level walk: filter here too, otherwise an ignored directory
       // would still get a README generated for it.
@@ -152,7 +174,8 @@ ${rendered}
               '',
               repositoryUrl,
               '   ',
-              extraData
+              extraData,
+              subMode
             );
           }
         });
@@ -196,8 +219,39 @@ ${extraData.root_body}
 ${directoryTree ? '## Directory Tree\n' + directoryTree : ''}
 ${extraData.root_footer}
 `;
-  fs.writeFileSync(currentPath + '/README.md', buildReadmeData);
-  console.log('\x1b[32m%s\x1b[0m', 'README.md created in ' + currentPath, '\x1b[0m');
+  writeReadmeFile(currentPath, buildReadmeData, rootMode);
 };
 
-buildMainReadme();
+/**
+ * Binary entry point. Returns the process exit code so the behaviour can be
+ * asserted in tests without spawning a shell.
+ */
+export const main = (argv: string[] = []): number => {
+  let options: CliOptions;
+  try {
+    options = parseCliOptions(argv);
+  } catch (err) {
+    console.error('\x1b[31m%s\x1b[0m', (err as Error).message);
+    console.error(usage);
+    return 1;
+  }
+
+  if (options.help) {
+    console.log(usage);
+    return 0;
+  }
+
+  try {
+    buildMainReadme(options);
+  } catch (err) {
+    console.error('\x1b[31m%s\x1b[0m', (err as Error).message);
+    return 1;
+  }
+
+  return 0;
+};
+
+if (require.main === module) process.exitCode = main(process.argv.slice(2));
+
+export { buildMainReadme };
+export default main;

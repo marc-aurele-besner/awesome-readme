@@ -2,6 +2,7 @@ import * as fs from 'fs';
 
 import { listFilteredFiles } from './filterFiles';
 import type { ExtraData } from './types';
+import { writeReadmeFile, type ReadmeWriteMode } from './writeReadme';
 
 const buildReadme = (
   file: string,
@@ -12,7 +13,10 @@ const buildReadme = (
   description: string,
   repositoryUrl: string,
   prefix = '',
-  extraData: ExtraData
+  extraData: ExtraData,
+  // The directory tree is returned to the caller regardless of the mode, so
+  // `--root-only` and `--dry-run` still render a complete root README.
+  mode: ReadmeWriteMode = 'write'
 ): string | undefined => {
   if (currentPath) {
     // Shared with the root walk so `ignore_files`, `.git*` and `.gitignore`
@@ -57,8 +61,7 @@ ${extraData.sub_body}
 ${directoryTree ? '## Directory Tree\n[<- Previous](' + repositoryUrl + ')\n' + directoryTreePrefix + directoryTree + directoryTreeSuffix : ''}
 ${extraData.sub_footer}
 `;
-    fs.writeFileSync(currentPath + '/README.md', buildReadme);
-    console.log('\x1b[32m%s\x1b[0m', 'README.md created in ' + currentPath, '\x1b[0m');
+    writeReadmeFile(currentPath, buildReadme, mode);
     return directoryTree;
   }
 };

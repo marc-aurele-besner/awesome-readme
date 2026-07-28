@@ -32,6 +32,31 @@ npm i awesome-readme -g
 \`\`\`
 npx awesome-readme
 \`\`\`
+
+## CLI options
+
+\`\`\`
+Usage: awesome-readme [options]
+
+Options:
+  -h, --help            Show this help message and exit
+      --dry-run         Print what would be written without writing any file
+  -p, --path <dir>      Project root to generate READMEs for (default: current directory)
+  -c, --config <file>   Path to the config file (default: <path>/awesome-readme.config.js)
+      --root-only       Only write the root README, skip subdirectory READMEs
+\`\`\`
+
+Preview the output before touching your files:
+
+\`\`\`
+npx awesome-readme --dry-run
+\`\`\`
+
+Generate for another project, with a config living elsewhere:
+
+\`\`\`
+npx awesome-readme --path ./packages/core --config ./readme.config.js
+\`\`\`
 `,
   root_body: `
 
