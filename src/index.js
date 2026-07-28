@@ -83,11 +83,13 @@ ${config.figlet}
   }
   const directory = [];
   const currentFiles = [];
+  // Map each subdirectory name to its rendered tree text so it can be nested
+  // under that directory in the parent tree instead of being dumped at the bottom.
+  const subDirectoryTreeMap = {};
 
   let directoryFileList = '';
   let currentFilesList = '';
   let directoryTree = `\`\`\`\n` + repositoryName + '/\n';
-  let subDirectoryTree = [];
 
   // identify if the files are directories or files
   files.map((file) => {
@@ -107,7 +109,7 @@ ${config.figlet}
         '   ',
         extraData
       );
-      subDirectoryTree += addToTree;
+      subDirectoryTreeMap[file] = addToTree;
       let subDirectoryFiles = fs.readdirSync(filePath + '/');
       if (subDirectoryFiles.length > 0)
         subDirectoryFiles.map((subDirectoryFile) => {
@@ -136,10 +138,25 @@ ${config.figlet}
   currentFiles.forEach((element) => {
     directoryTree += `│   ${element}\n`;
   });
-  directory.forEach((element) => {
-    directoryTree += `└─── ${element}/\n`;
+  directory.forEach((element, index) => {
+    const isLast = index === directory.length - 1;
+    const connector = isLast ? '└───' : '├───';
+    // Children of a non-last directory are drawn with a `│` so the parent's
+    // connector column continues; children of the last directory use blanks.
+    const childIndent = isLast ? '    ' : '│   ';
+    directoryTree += `${connector} ${element}/\n`;
+    // Nest the subdirectory's tree immediately under its directory entry so
+    // files from different subdirectories are no longer mixed at the bottom.
+    const subTree = subDirectoryTreeMap[element] || '';
+    subTree.split('\n').forEach((line) => {
+      if (line === '') return;
+      // buildReadme prefixes each of its lines with three spaces so that the
+      // subdirectory's tree lines up one level deep. Replace that prefix with
+      // the parent's child indent so the lines sit under the right connector.
+      directoryTree += `${childIndent}${line.replace(/^ {3}/, '')}\n`;
+    });
   });
-  directoryTree += subDirectoryTree + `\`\`\``;
+  directoryTree += `\`\`\``;
   const buildReadmeData = `
 [![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})
 ${extraData.root_license}
