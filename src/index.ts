@@ -3,6 +3,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import figletLib from 'figlet';
+
 import buildReadme from './buildReadme';
 import type { ExtraData } from './types';
 
@@ -60,6 +62,22 @@ ${config.figlet}
     if (config.ignore_gitFiles !== undefined) extraData.ignore_gitFiles = config.ignore_gitFiles;
     if (config.ignore_gitIgnoreFiles !== undefined) extraData.ignore_gitIgnoreFiles = config.ignore_gitIgnoreFiles;
     if (config.ignore_files !== undefined && config.ignore_files.length > 0) extraData.ignore_files = config.ignore_files;
+    // When `figlet_text` is provided, render it with the figlet package so the
+    // user does not have to hand-author the ASCII art. Pre-rendered `figlet`
+    // strings still win so existing configs keep working.
+    if (config.figlet_text !== undefined) {
+      const font = typeof config.figlet_font === 'string' && config.figlet_font.length > 0 ? config.figlet_font : 'Standard';
+      try {
+        const rendered = figletLib.textSync(String(config.figlet_text), { font });
+        figlet = `
+\`\`\`
+${rendered}
+\`\`\``;
+        console.log('\x1b[33m', 'Generated figlet from figlet_text using font "' + font + '"', '\x1b[0m');
+      } catch (err) {
+        console.log('\x1b[31m', 'Failed to generate figlet for "' + String(config.figlet_text) + '" with font "' + font + '":', '\x1b[0m', err);
+      }
+    }
   }
   let repositoryUrl = '';
   if (typeof repository === 'string')
