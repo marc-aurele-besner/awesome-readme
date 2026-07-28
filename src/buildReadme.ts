@@ -54,13 +54,16 @@ const buildReadme = (
     const directoryTreePrefix = `\`\`\`\n${file}/\n`;
     const directoryTreeSuffix = `\`\`\``;
     const buildReadme = `
-${licenseBadge ? licenseBadge + '\n\n' : ''}
+${licenseBadge ? licenseBadge + '\n\n' : ''}${extraData.sub_license}
 # ${title ? title : 'Awesome-Readme'}
 ${figlet}
 ${description ? description : ''}
+${extraData.sub_header}
 ${directoryFileList ? '## Directories\n' + directoryFileList + '\n' : ''}
 ${currentFilesList ? currentFilesList : ''}
+${extraData.sub_body}
 ${directoryTree ? '## Directory Tree\n[<- Previous](' + repositoryUrl + ')\n' + directoryTreePrefix + directoryTree + directoryTreeSuffix : ''}
+${extraData.sub_footer}
 `;
     fs.writeFileSync(currentPath + '/README.md', buildReadme);
     console.log('\x1b[32m%s\x1b[0m', 'README.md created in ' + currentPath, '\x1b[0m');
