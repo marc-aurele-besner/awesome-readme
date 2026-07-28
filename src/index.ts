@@ -87,6 +87,25 @@ ${rendered}
     repositoryUrl = repository.url.substring(4);
     repositoryUrl = repositoryUrl.substring(0, repositoryUrl.length - 4);
   }
+  // Derive the GitHub "owner/repo" slug from the repository URL so license
+  // badges point at the actual project instead of a hardcoded third-party
+  // repo. Accepts https and ssh-style URLs, and falls back to an empty string
+  // when no slug can be derived (e.g. non-GitHub remotes or missing metadata).
+  const deriveRepositorySlug = (url: string): string => {
+    if (!url) return '';
+    const cleaned = url
+      .replace(/^git\+/, '')
+      .replace(/\.git$/, '')
+      .replace(/\/+$/, '');
+    // SSH-style: git@github.com:owner/repo  → matches after the colon
+    const sshMatch = cleaned.match(/[/:]([^/]+\/[^/]+)$/);
+    if (sshMatch) return sshMatch[1];
+    return '';
+  };
+  const repositorySlug = deriveRepositorySlug(repositoryUrl);
+  const licenseBadge = repositorySlug
+    ? `[![license](https://img.shields.io/github/license/${repositorySlug}.svg)](https://opensource.org/licenses/${repositoryLicensee})`
+    : '';
   // List of all the files in the current directory
   let files = fs.readdirSync(currentPath);
 
@@ -126,17 +145,7 @@ ${rendered}
     if (stats.isDirectory()) {
       directory.push(file);
       directoryFileList += ` - [${file}/](./${file}/)\r`;
-      const addToTree = buildReadme(
-        file,
-        filePath + '/',
-        repositoryName + ' / ' + file,
-        figlet,
-        `[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})`,
-        '',
-        repositoryUrl,
-        '   ',
-        extraData
-      );
+      const addToTree = buildReadme(file, filePath + '/', repositoryName + ' / ' + file, figlet, licenseBadge, '', repositoryUrl, '   ', extraData);
       subDirectoryTreeMap[file] = addToTree ?? '';
       let subDirectoryFiles = fs.readdirSync(filePath + '/');
       if (subDirectoryFiles.length > 0)
@@ -149,7 +158,7 @@ ${rendered}
               filePath + '/' + subDirectoryFile + '/',
               repositoryName + ' / ' + file + ' / ' + subDirectoryFile,
               figlet,
-              `[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})`,
+              licenseBadge,
               '',
               repositoryUrl,
               '   ',
@@ -186,8 +195,7 @@ ${rendered}
   });
   directoryTree += `\`\`\``;
   const buildReadmeData = `
-[![license](https://img.shields.io/github/license/jamesisaac/react-native-background-task.svg)](https://opensource.org/licenses/${repositoryLicensee})
-${extraData.root_license}
+${licenseBadge}${licenseBadge ? '\n' : ''}${extraData.root_license}
 
 # ${repositoryName}
 ${figlet}
