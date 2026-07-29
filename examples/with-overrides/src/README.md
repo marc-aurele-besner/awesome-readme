@@ -3,7 +3,7 @@
 [![license](https://img.shields.io/github/license/marc-aurele-besner/awesome-readme.svg)](https://opensource.org/licenses/MIT)
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-# awesome-readme / src
+# awesome-readme / examples / with-overrides / src
 
 ```
 
@@ -16,23 +16,20 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 ```
 
 ## About this directory
+## Directories
+ - [hooks/](./hooks/)
 
- - [README.md](./README.md) - [buildReadme.ts](./buildReadme.ts) - [cli.ts](./cli.ts) - [directoryOverrides.ts](./directoryOverrides.ts) - [filterFiles.ts](./filterFiles.ts) - [index.ts](./index.ts) - [tree.ts](./tree.ts) - [types.ts](./types.ts) - [walk.ts](./walk.ts) - [writeReadme.ts](./writeReadme.ts)
+ - [README.md](./README.md) - [index.js](./index.js)
 This directory is part of the awesome-readme project.
 ## Directory Tree
-[<- Previous](https://github.com/marc-aurele-besner/awesome-readme)
+[<- Previous](../README.md)
 ```
 src/
    ├─── README.md
-   ├─── buildReadme.ts
-   ├─── cli.ts
-   ├─── directoryOverrides.ts
-   ├─── filterFiles.ts
-   ├─── index.ts
-   ├─── tree.ts
-   ├─── types.ts
-   ├─── walk.ts
-   └─── writeReadme.ts
+   └─── index.js
+   └─── hooks/
+       ├─── README.md
+       └─── pre-commit.js
 ```
 ## Don't hesitate to contribute to this project.
 

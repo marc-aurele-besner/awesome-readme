@@ -129,9 +129,53 @@ module.exports = {
     // coverage/, build/) is merged in automatically; set \`ignore_defaults\` to
     // false to opt out.
     ignore_files: ['.prettierignore'],
-    ignore_defaults: true
+    ignore_defaults: true,
+    // \`directories\` patches the eight text fields for the matching directory
+    // only. Keys are project-root-relative POSIX paths and matching is exact
+    // (no cascade). The walker and ignore rules stay global, so the tree
+    // stays consistent across READMEs.
+    // directories: {
+    //   src: { sub_header: 'Source code' },
+    //   'src/internal': { sub_header: 'Internal helpers' }
+    // }
 }
 \`\`\`
+
+### Per-directory overrides
+
+For monorepos and multi-package trees where different directories deserve
+their own copy, add a top-level \`directories\` block to the config. Keys
+are project-root-relative POSIX paths and matching is exact: an entry for
+\`src\` does **not** cascade to \`src/internal\`. Each value patches only
+the eight text fields (\`root_/sub_ license/header/body/footer\`) for the
+matching directory; ignore rules and \`max_depth\` stay global so the
+walker cannot drift between READMEs.
+
+\`\`\`
+module.exports = {
+    sub_header: 'Default intro for every README',
+    sub_body: 'Default body',
+    directories: {
+        src: { sub_header: 'Source code' },
+        '.vscode': { sub_header: 'Editor settings' },
+        'src/hooks': { sub_header: 'Hooks', sub_body: 'Lifecycle scripts' }
+    }
+};
+\`\`\`
+
+Rules:
+
+- Keys must be project-root-relative POSIX paths. \`src\`, \`.vscode\`
+  and \`packages/api\` are valid; leading slashes, backslashes, \`..\`
+  segments and the empty string are rejected.
+- Matching is **exact**. Unspecified directories keep the global
+  \`sub_*\` defaults — an override for \`src\` does not apply to
+  \`src/hooks\`.
+- The root README is never overridden. There is no empty-key form.
+- Empty-string values (e.g. \`sub_footer: ''\`) clear the section in the
+  targeted README only.
+- See \`examples/with-overrides/\` for a runnable demo.
+
 `,
   root_footer: `## Don't hesitate to contribute to this project.`,
   sub_license: `[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)`,
@@ -145,5 +189,15 @@ module.exports = {
   // coverage/, build/) is merged in automatically; set `ignore_defaults` to
   // false to opt out.
   ignore_files: ['.prettierignore'],
-  ignore_defaults: true
+  ignore_defaults: true,
+  // `directories` patches the eight text fields (`root_/sub_ license/header/
+  // body/footer`) for the matching directory only. Matching is exact and
+  // does not cascade: an entry for `src` does NOT apply to `src/internal`;
+  // that directory either has its own entry or falls back to the global
+  // `sub_*` defaults. See `examples/with-overrides/` for a runnable demo
+  // and `README.md` for the full rules.
+  // directories: {
+  //   src: { sub_header: 'Source code' },
+  //   'src/internal': { sub_header: 'Internal helpers' }
+  // }
 };

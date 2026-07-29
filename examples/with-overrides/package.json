@@ -1,0 +1,10 @@
+{
+  "name": "with-overrides",
+  "version": "0.1.0",
+  "description": "Example that uses per-directory overrides to give src/, src/hooks/ and .vscode/ distinct headers and bodies.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/example/with-overrides.git"
+  }
+}
