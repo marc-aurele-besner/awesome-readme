@@ -62,7 +62,9 @@ test('parseCliOptions defaults every flag to off', () => {
     force: false,
     ifMissing: false,
     path: undefined,
-    config: undefined
+    config: undefined,
+    templateRoot: undefined,
+    templateSub: undefined
   });
 });
 
@@ -74,7 +76,9 @@ test('parseCliOptions reads long and short forms', () => {
     force: false,
     ifMissing: false,
     path: undefined,
-    config: undefined
+    config: undefined,
+    templateRoot: undefined,
+    templateSub: undefined
   });
   assert.strictEqual(parseCliOptions(['-h']).help, true);
   assert.strictEqual(parseCliOptions(['--dry-run']).dryRun, true);
@@ -85,6 +89,8 @@ test('parseCliOptions reads long and short forms', () => {
   assert.strictEqual(parseCliOptions(['-p', './pkg']).path, './pkg');
   assert.strictEqual(parseCliOptions(['--config', 'a.js']).config, 'a.js');
   assert.strictEqual(parseCliOptions(['-c', 'a.js']).config, 'a.js');
+  assert.strictEqual(parseCliOptions(['--template-root', 'root.md']).templateRoot, 'root.md');
+  assert.strictEqual(parseCliOptions(['--template-sub', 'sub.md']).templateSub, 'sub.md');
 });
 
 test('parseCliOptions rejects unknown flags, missing values and positionals', () => {
@@ -92,6 +98,8 @@ test('parseCliOptions rejects unknown flags, missing values and positionals', ()
   assert.throws(() => parseCliOptions(['--path']));
   assert.throws(() => parseCliOptions(['--path', '']), /--path requires a directory/);
   assert.throws(() => parseCliOptions(['--config', '  ']), /--config requires a file path/);
+  assert.throws(() => parseCliOptions(['--template-root', '  ']), /--template-root requires a file path/);
+  assert.throws(() => parseCliOptions(['--template-sub', '']), /--template-sub requires a file path/);
   assert.throws(() => parseCliOptions(['extra-arg']));
 });
 
@@ -189,6 +197,93 @@ test('a missing --config or --path exits non-zero', () => {
     assert.match(missingPath.stderr, /Project path not found/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #90: --template-root swaps the root README layout without
+// touching the bundled default, so users can preview a layout in a scratch
+// directory before committing it to the project config.
+test('--template-root renders the root README from a custom template file', () => {
+  const root = makeProject();
+  const templateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-tpl-cli-'));
+  const templatePath = path.join(templateDir, 'root.md');
+  fs.writeFileSync(templatePath, 'CUSTOM-ROOT-{{name}}\n');
+
+  try {
+    const { result } = captureOutput(() => main(['--path', root, '--template-root', templatePath]));
+
+    assert.strictEqual(result, 0);
+    const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    assert.match(readme, /CUSTOM-ROOT-demo/);
+    // The bundled default would emit `# demo`, but the custom template
+    // replaces the whole layout, so the heading is gone.
+    assert.doesNotMatch(readme, /^# demo$/m);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(templateDir, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #90: --template-sub applies to every subdirectory README in
+// the same run, so a single flag is enough to rebrand the entire tree.
+test('--template-sub renders subdirectory READMEs from a custom template file', () => {
+  const root = makeProject();
+  const templateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-tpl-sub-'));
+  const templatePath = path.join(templateDir, 'sub.md');
+  fs.writeFileSync(templatePath, 'CUSTOM-SUB {{name}}\n');
+
+  try {
+    const { result } = captureOutput(() => main(['--path', root, '--template-sub', templatePath]));
+
+    assert.strictEqual(result, 0);
+    const subReadme = fs.readFileSync(path.join(root, 'src', 'README.md'), 'utf8');
+    assert.match(subReadme, /CUSTOM-SUB demo \/ src/);
+    // The bundled default would emit `[<- Previous](...)` inside the tree
+    // section; a fully custom template that does not reference it must
+    // suppress the link, not silently keep the default.
+    assert.doesNotMatch(subReadme, /\[<- Previous\]/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(templateDir, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #90: a missing custom template path is reported with a
+// dedicated error message rather than the generic config-file one, so
+// users do not have to second-guess which flag they got wrong.
+test('a missing --template-root exits non-zero with a dedicated error', () => {
+  const root = makeProject();
+  const templateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-tpl-missing-'));
+  const missing = path.join(templateDir, 'does-not-exist.md');
+
+  try {
+    const { result, stderr } = captureOutput(() => main(['--path', root, '--template-root', missing]));
+    assert.strictEqual(result, 1);
+    assert.match(stderr, /Template file not found/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(templateDir, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #90: the config file can also point to custom templates, so
+// projects can ship their layout alongside the rest of the configuration.
+test('config.template_root renders the root README from a template file in the config', () => {
+  const root = makeProject();
+  const templateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-tpl-cfg-'));
+  const templatePath = path.join(templateDir, 'root.md');
+  fs.writeFileSync(templatePath, 'CONFIG-ROOT-{{name}}\n');
+  fs.writeFileSync(path.join(root, 'awesome-readme.config.js'), `module.exports = { template_root: ${JSON.stringify(templatePath)} };\n`);
+
+  try {
+    const { result } = captureOutput(() => main(['--path', root]));
+
+    assert.strictEqual(result, 0);
+    const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    assert.match(readme, /CONFIG-ROOT-demo/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(templateDir, { recursive: true, force: true });
   }
 });
 

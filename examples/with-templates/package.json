@@ -1,0 +1,10 @@
+{
+  "name": "with-templates",
+  "version": "0.1.0",
+  "description": "Example that swaps the bundled README templates for custom ones shipped alongside the config.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/example/with-templates.git"
+  }
+}

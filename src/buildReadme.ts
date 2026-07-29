@@ -1,3 +1,4 @@
+import { renderTemplate, DEFAULT_SUB_TEMPLATE } from './template';
 import { renderTreeLines, type TreeNode } from './tree';
 import type { ExtraData } from './types';
 import type { DirectoryNode } from './walk';
@@ -27,6 +28,12 @@ export interface SubReadmeOptions {
    * bare mode or the full write options (`--force`, `--if-missing`).
    */
   writeOptions?: ReadmeWriteMode | ReadmeWriteOptions;
+  /**
+   * Template used to render this README. Resolved once in `src/index.ts`
+   * (CLI flag → config → default) and threaded through the recursive walk so
+   * every subdirectory shares the same layout.
+   */
+  template?: string;
 }
 
 /**
@@ -48,7 +55,18 @@ export const toTreeNodes = (node: DirectoryNode): TreeNode[] => [
  * to the root README's and hold at any depth.
  */
 const buildReadme = (options: SubReadmeOptions): string => {
-  const { node, title, figlet, licenseBadge, description = '', previousUrl, prefix = '', extraData, writeOptions = 'write' } = options;
+  const {
+    node,
+    title,
+    figlet,
+    licenseBadge,
+    description = '',
+    previousUrl,
+    prefix = '',
+    extraData,
+    writeOptions = 'write',
+    template = DEFAULT_SUB_TEMPLATE
+  } = options;
 
   let directoryFileList = '';
   let currentFilesList = '';
@@ -63,21 +81,22 @@ const buildReadme = (options: SubReadmeOptions): string => {
   // subdirectory README shows everything below it. `prefix` shifts the block
   // one level in so it still reads as a tree hanging off the directory name.
   const treeLines = renderTreeLines(toTreeNodes(node)).map((line) => `${prefix}${line}`);
-  const directoryTree = treeLines.join('\n');
-  const directoryTreePrefix = `\`\`\`\n${node.name}/\n`;
-  const directoryTreeSuffix = `\`\`\``;
-  const readmeContents = `
-${licenseBadge ? licenseBadge + '\n\n' : ''}${extraData.sub_license}
-# ${title ? title : 'Awesome-Readme'}
-${figlet}
-${description ? description : ''}
-${extraData.sub_header}
-${directoryFileList ? '## Directories\n' + directoryFileList + '\n' : ''}
-${currentFilesList ? currentFilesList : ''}
-${extraData.sub_body}
-${directoryTree ? '## Directory Tree\n[<- Previous](' + previousUrl + ')\n' + directoryTreePrefix + directoryTree + '\n' + directoryTreeSuffix : ''}
-${extraData.sub_footer}
-`;
+  const directoryTree = `\`\`\`\n${node.name}/\n${treeLines.join('\n')}\n\`\`\``;
+  const variables = {
+    name: title || 'Awesome-Readme',
+    licenseBadge,
+    license: extraData.sub_license,
+    figlet,
+    header: extraData.sub_header,
+    directories: directoryFileList,
+    files: currentFilesList,
+    body: extraData.sub_body,
+    tree: directoryTree,
+    footer: extraData.sub_footer,
+    previousUrl,
+    description
+  };
+  const readmeContents = renderTemplate(template, variables);
   writeReadmeFile(node.path, readmeContents, writeOptions);
   return directoryTree;
 };

@@ -17,6 +17,10 @@ export interface CliOptions {
   ifMissing: boolean;
   path?: string;
   config?: string;
+  /** Path to a custom template for the root README. */
+  templateRoot?: string;
+  /** Path to a custom template for subdirectory READMEs. */
+  templateSub?: string;
 }
 
 export const usage = `Usage: awesome-readme [options]
@@ -31,11 +35,13 @@ that region is regenerated. A README without markers is left untouched unless
 Options:
   -h, --help            Show this help message and exit
       --dry-run         Print what would be written without writing any file
-  -p, --path <dir>      Project root to generate READMEs for (default: current directory)
-  -c, --config <file>   Path to the config file (default: <path>/awesome-readme.config.js)
-      --root-only       Only write the root README, skip subdirectory READMEs
-      --force           Overwrite existing READMEs entirely, discarding their content
-      --if-missing      Only create READMEs for directories that do not have one
+  -p, --path <dir>          Project root to generate READMEs for (default: current directory)
+  -c, --config <file>       Path to the config file (default: <path>/awesome-readme.config.js)
+      --root-only           Only write the root README, skip subdirectory READMEs
+      --force               Overwrite existing READMEs entirely, discarding their content
+      --if-missing          Only create READMEs for directories that do not have one
+      --template-root <f>   Use a custom template for the root README
+      --template-sub <f>    Use a custom template for subdirectory READMEs
 
 Examples:
   awesome-readme
@@ -43,7 +49,8 @@ Examples:
   awesome-readme --path ./packages/core --config ./readme.config.js
   awesome-readme --root-only
   awesome-readme --if-missing
-  awesome-readme --force`;
+  awesome-readme --force
+  awesome-readme --template-root ./my-root.md --template-sub ./my-sub.md`;
 
 /**
  * Parse `process.argv.slice(2)` into `CliOptions`.
@@ -66,7 +73,9 @@ export const parseCliOptions = (argv: string[]): CliOptions => {
         force: { type: 'boolean', default: false },
         'if-missing': { type: 'boolean', default: false },
         path: { type: 'string', short: 'p' },
-        config: { type: 'string', short: 'c' }
+        config: { type: 'string', short: 'c' },
+        'template-root': { type: 'string' },
+        'template-sub': { type: 'string' }
       }
     });
   } catch (err) {
@@ -81,12 +90,16 @@ export const parseCliOptions = (argv: string[]): CliOptions => {
     'if-missing'?: boolean;
     path?: string;
     config?: string;
+    'template-root'?: string;
+    'template-sub'?: string;
   };
 
   // `--path` / `--config` with an empty value is a user mistake rather than a
   // request to use the default, so reject it instead of silently falling back.
   if (values.path !== undefined && values.path.trim() === '') throw new Error('Option --path requires a directory.');
   if (values.config !== undefined && values.config.trim() === '') throw new Error('Option --config requires a file path.');
+  if (values['template-root'] !== undefined && values['template-root'].trim() === '') throw new Error('Option --template-root requires a file path.');
+  if (values['template-sub'] !== undefined && values['template-sub'].trim() === '') throw new Error('Option --template-sub requires a file path.');
   // `--force` overwrites everything and `--if-missing` refuses to touch any
   // existing file: asking for both is a contradiction, not a precedence puzzle.
   if (values.force === true && values['if-missing'] === true) throw new Error('Options --force and --if-missing cannot be combined.');
@@ -98,7 +111,9 @@ export const parseCliOptions = (argv: string[]): CliOptions => {
     force: values.force === true,
     ifMissing: values['if-missing'] === true,
     path: values.path,
-    config: values.config
+    config: values.config,
+    templateRoot: values['template-root'],
+    templateSub: values['template-sub']
   };
 };
 
