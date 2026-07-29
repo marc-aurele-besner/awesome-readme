@@ -1,3 +1,4 @@
+<!-- awesome-readme:start -->
 
 [![license](https://img.shields.io/github/license/marc-aurele-besner/awesome-readme.svg)](https://opensource.org/licenses/MIT)
 [![npm version](https://badge.fury.io/js/awesome-readme.svg)](https://badge.fury.io/js/awesome-readme)
@@ -44,7 +45,16 @@ Options:
   -p, --path <dir>      Project root to generate READMEs for (default: current directory)
   -c, --config <file>   Path to the config file (default: <path>/awesome-readme.config.js)
       --root-only       Only write the root README, skip subdirectory READMEs
+      --force           Overwrite existing READMEs entirely, discarding their content
+      --if-missing      Only create READMEs for directories that do not have one
 ```
+
+Existing READMEs are never clobbered: generated content lives between
+`<!-- awesome-readme:start -->` and `<!-- awesome-readme:end -->` markers
+and only that region is regenerated on the next run. A README without markers
+is left untouched unless `--force` is passed. To regenerate part of a
+hand-written README, wrap the section you want the tool to own with the two
+markers.
 
 Preview the output before touching your files:
 
@@ -58,8 +68,19 @@ Generate for another project, with a config living elsewhere:
 npx awesome-readme --path ./packages/core --config ./readme.config.js
 ```
 
+Add the markers to a hand-written README to opt into partial regeneration:
+
+```
+<!-- awesome-readme:start -->
+<!-- awesome-readme:end -->
+```
+
+Fill the gap with anything you want the tool to own (a tree, a badge list, an
+auto-generated file index, etc.) and the next run will refresh that block
+without touching the rest of the file.
+
 ## Directories
- - [.vscode/](./.vscode/) - [src/](./src/) - [test/](./test/)
+ - [.vscode/](./.vscode/) - [examples/](./examples/) - [src/](./src/) - [test/](./test/)
 
  - [.npmignore](./.npmignore)
  - [.prettierrc](./.prettierrc)
@@ -140,6 +161,34 @@ awesome-readme/
 │   ├─── README.md
 │   ├─── extensions.json
 │   └─── settings.json
+├─── examples/
+│   └─── README.md
+│   ├─── minimal/
+│   │   ├─── README.md
+│   │   └─── package.json
+│   │   └─── src/
+│   │       ├─── README.md
+│   │       └─── index.js
+│   ├─── nested/
+│   │   ├─── README.md
+│   │   └─── package.json
+│   │   ├─── src/
+│   │   │   ├─── README.md
+│   │   │   └─── index.js
+│   │   │   └─── lib/
+│   │   │       ├─── README.md
+│   │   │       ├─── format.js
+│   │   │       └─── math.js
+│   │   └─── test/
+│   │       ├─── README.md
+│   │       └─── smoke.test.js
+│   └─── with-config/
+│       ├─── README.md
+│       ├─── awesome-readme.config.js
+│       └─── package.json
+│       └─── src/
+│           ├─── README.md
+│           └─── index.js
 ├─── src/
 │   ├─── README.md
 │   ├─── buildReadme.ts
@@ -148,11 +197,175 @@ awesome-readme/
 │   ├─── index.ts
 │   ├─── tree.ts
 │   ├─── types.ts
+│   ├─── walk.ts
 │   └─── writeReadme.ts
 └─── test/
     ├─── README.md
     ├─── cli.test.js
     ├─── filterFiles.test.js
-    └─── tree.test.js
+    ├─── preserveReadme.test.js
+    ├─── tree.test.js
+    └─── walk.test.js
 ```
 ## Don't hesitate to contribute to this project.
+
+<!-- awesome-readme:end -->` markers
+and only that region is regenerated on the next run. A README without markers
+is left untouched unless `--force` is passed. To regenerate part of a
+hand-written README, wrap the section you want the tool to own with the two
+markers.
+
+Preview the output before touching your files:
+
+```
+npx awesome-readme --dry-run
+```
+
+Generate for another project, with a config living elsewhere:
+
+```
+npx awesome-readme --path ./packages/core --config ./readme.config.js
+```
+
+Add the markers to a hand-written README to opt into partial regeneration:
+
+```
+<!-- awesome-readme:start -->
+<!-- awesome-readme:end -->
+```
+
+Fill the gap with anything you want the tool to own (a tree, a badge list, an
+auto-generated file index, etc.) and the next run will refresh that block
+without touching the rest of the file.
+
+## Directories
+ - [.vscode/](./.vscode/) - [examples/](./examples/) - [src/](./src/) - [test/](./test/)
+
+ - [.npmignore](./.npmignore)
+ - [.prettierrc](./.prettierrc)
+ - [CONTRIBUTING.md](./CONTRIBUTING.md)
+ - [LICENSE](./LICENSE)
+ - [README.md](./README.md)
+ - [awesome-readme.config.js](./awesome-readme.config.js)
+ - [eslint.config.js](./eslint.config.js)
+ - [package-lock.json](./package-lock.json)
+ - [package.json](./package.json)
+ - [tsconfig.json](./tsconfig.json)
+
+
+
+## Configuration with awesome-readme.config.js
+
+```
+module.exports = {
+    // Set figlet_text to a plain string and the tool will render it with the
+    // figlet package at build time (no need to hand-author ASCII art). Use
+    // figlet_font to pick a different font (defaults to "Standard"). Leave the
+    // pre-rendered figlet below in place if you want to use that instead.
+    // figlet_text: 'awesome-readme',
+    // figlet_font: 'Standard',
+    // By default a banner is auto-generated from `package.json` `name` when
+    // neither `figlet` nor `figlet_text` is set. Set `figlet_auto` to
+    // false to keep the banner blank, or to true to force auto-generation
+    // even when `figlet_text` is unset.
+    // figlet_auto: true,
+    figlet: `
+    .d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b
+    d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D 88'     d8' '8b 88  '8D 88'YbdP'88 88'
+    88ooo88 88   I8I   88 88ooooo '8bo.   88    88 88  88  88 88ooooo        88oobY' 88ooooo 88ooo88 88   88 88  88  88 88ooooo
+    88~~~88 Y8   I8I   88 88~~~~~   'Y8b. 88    88 88  88  88 88~~~~~ C8888D 88'8b   88~~~~~ 88~~~88 88   88 88  88  88 88~~~~~
+    88   88 '8b d8'8b d8' 88.     db   8D '8b  d8' 88  88  88 88.            88 '88. 88.     88   88 88  .8D 88  88  88 88.
+    YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P`,
+    root_license: `[![npm version](https://badge.fury.io/js/awesome-readme.svg)](https://badge.fury.io/js/awesome-readme)`,
+    root_header: `
+    ## Install Awesome-Readme
+    ```
+    npm i awesome-readme
+    ```
+    ## Use Awesome-Readme
+    ```
+    npx awesome-readme
+    ````,
+    root_body: `## Configuration with awesome-readme.config.js`,
+    root_footer: `## Don't hesitate to contribute to this project.`,
+    sub_license: `[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)`,
+    sub_header: `## About this directory`,
+    sub_body: `This directory is part of the awesome-readme project.`,
+    sub_footer: `## Don't hesitate to contribute to this project.`,
+    ignore_gitFiles: true,
+    ignore_gitIgnoreFiles: true,
+    // `ignore_files` accepts gitignore-style globs (`*.log`, `dist/`). On top of
+    // what is listed here, a small set of defaults (node_modules/, dist/,
+    // coverage/, build/) is merged in automatically; set `ignore_defaults` to
+    // false to opt out.
+    ignore_files: ['.prettierignore'],
+    ignore_defaults: true
+}
+```
+
+## Directory Tree
+```
+awesome-readme/
+├─── .npmignore
+├─── .prettierrc
+├─── CONTRIBUTING.md
+├─── LICENSE
+├─── README.md
+├─── awesome-readme.config.js
+├─── eslint.config.js
+├─── package-lock.json
+├─── package.json
+└─── tsconfig.json
+├─── .vscode/
+│   ├─── README.md
+│   ├─── extensions.json
+│   └─── settings.json
+├─── examples/
+│   └─── README.md
+│   ├─── minimal/
+│   │   ├─── README.md
+│   │   └─── package.json
+│   │   └─── src/
+│   │       ├─── README.md
+│   │       └─── index.js
+│   ├─── nested/
+│   │   ├─── README.md
+│   │   └─── package.json
+│   │   ├─── src/
+│   │   │   ├─── README.md
+│   │   │   └─── index.js
+│   │   │   └─── lib/
+│   │   │       ├─── README.md
+│   │   │       ├─── format.js
+│   │   │       └─── math.js
+│   │   └─── test/
+│   │       ├─── README.md
+│   │       └─── smoke.test.js
+│   └─── with-config/
+│       ├─── README.md
+│       ├─── awesome-readme.config.js
+│       └─── package.json
+│       └─── src/
+│           ├─── README.md
+│           └─── index.js
+├─── src/
+│   ├─── README.md
+│   ├─── buildReadme.ts
+│   ├─── cli.ts
+│   ├─── filterFiles.ts
+│   ├─── index.ts
+│   ├─── tree.ts
+│   ├─── types.ts
+│   ├─── walk.ts
+│   └─── writeReadme.ts
+└─── test/
+    ├─── README.md
+    ├─── cli.test.js
+    ├─── filterFiles.test.js
+    ├─── preserveReadme.test.js
+    ├─── tree.test.js
+    └─── walk.test.js
+```
+## Don't hesitate to contribute to this project.
+
+<!-- awesome-readme:end -->

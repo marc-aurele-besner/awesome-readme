@@ -1,0 +1,10 @@
+{
+  "name": "nested",
+  "version": "0.1.0",
+  "description": "Monorepo-style layout with nested source and test directories — exercises the recursive walk.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/example/nested.git"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "minimal",
+  "version": "0.1.0",
+  "description": "Smallest possible awesome-readme example: just a package.json and one source file.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/example/minimal.git"
+  }
+}
