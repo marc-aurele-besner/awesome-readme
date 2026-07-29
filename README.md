@@ -1,3 +1,175 @@
+# awesome-readme
+
+[![npm version](https://badge.fury.io/js/awesome-readme.svg)](https://www.npmjs.com/package/awesome-readme)
+[![license](https://img.shields.io/github/license/marc-aurele-besner/awesome-readme.svg)](https://opensource.org/licenses/MIT)
+
+Generate consistent `README.md` files for a project and its subdirectories from one configuration. `awesome-readme` walks the directory tree, filters ignored files, renders directory links and trees, and preserves hand-written documentation between runs.
+
+## Why awesome-readme?
+
+- Keep root and subdirectory READMEs in sync from one command.
+- Preserve custom prose while refreshing only marked generated sections.
+- Respect `.gitignore`, `.npmignore`, custom gitignore-style patterns, and sensible default ignores.
+- Customize content globally or for exact project-relative directories.
+- Preview every operation with `--dry-run` before writing files.
+
+## Install
+
+Run without installing:
+
+```sh
+npx awesome-readme
+```
+
+Or add it to your project:
+
+```sh
+npm install --save-dev awesome-readme
+npx awesome-readme
+```
+
+A global installation is also supported:
+
+```sh
+npm install --global awesome-readme
+awesome-readme
+```
+
+Node.js 20 or newer is required.
+
+## Usage
+
+Generate READMEs from the current directory:
+
+```sh
+npx awesome-readme
+```
+
+Preview changes without writing files:
+
+```sh
+npx awesome-readme --dry-run
+```
+
+Generate only the root README for another project, using a custom config file:
+
+```sh
+npx awesome-readme --path ./packages/core --config ./readme.config.js --root-only
+```
+
+Create only missing READMEs:
+
+```sh
+npx awesome-readme --if-missing
+```
+
+### CLI options
+
+| Option | Description |
+| --- | --- |
+| `-h`, `--help` | Show the help message and exit. |
+| `--dry-run` | Print what would be written without changing files. |
+| `-p`, `--path <dir>` | Set the project root. Defaults to the current directory. |
+| `-c`, `--config <file>` | Set the config path. Defaults to `<path>/awesome-readme.config.js`. |
+| `--root-only` | Write only the root README and skip subdirectory READMEs. |
+| `--force` | Replace existing READMEs entirely, including hand-written content. |
+| `--if-missing` | Create READMEs only in directories that do not already have one. |
+
+`--force` and `--if-missing` cannot be combined.
+
+## Preserve hand-written content
+
+Generated content is delimited by these markers:
+
+```markdown
+<!-- awesome-readme:start\ -->
+<!-- awesome-readme:end\ -->
+```
+
+On later runs, `awesome-readme` replaces only the content between the markers. Everything before and after them remains unchanged, so a README can combine generated sections with hand-written guides, examples, or badges.
+
+An existing README without both markers is left untouched. Add the markers to opt into partial regeneration, pass `--force` to replace the entire file, or pass `--if-missing` to skip every existing README.
+
+## Configuration
+
+Create `awesome-readme.config.js` at the project root. Every field is optional:
+
+```js
+module.exports = {
+  // Banner: a pre-rendered string wins over figlet_text and figlet_auto.
+  figlet: '',
+  figlet_text: 'My project',
+  figlet_font: 'Standard',
+  figlet_auto: true,
+
+  // Content inserted into the generated root README region.
+  root_license: '',
+  root_header: '',
+  root_body: '',
+  root_footer: '',
+
+  // Content inserted into every generated subdirectory README.
+  sub_license: '',
+  sub_header: '## About this directory',
+  sub_body: '',
+  sub_footer: '',
+
+  // File filtering and traversal.
+  ignore_gitFiles: true,
+  ignore_gitIgnoreFiles: true,
+  ignore_files: ['*.log', 'tmp/'],
+  ignore_defaults: true,
+  max_depth: 10,
+
+  // Exact, project-relative overrides for selected directories.
+  directories: {
+    src: { sub_header: '## Source code' },
+    'src/internal': {
+      sub_header: '## Internal helpers',
+      sub_body: 'Private implementation details.'
+    }
+  }
+};
+```
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `figlet` | Pre-rendered banner text. When set, it takes precedence over other banner options. |
+| `figlet_text` | Text rendered as a banner by `figlet`. |
+| `figlet_font` | Font used with `figlet_text`; defaults to `Standard`. |
+| `figlet_auto` | Automatically render the package name when no explicit banner is configured; defaults to `true`. |
+| `root_license`, `root_header`, `root_body`, `root_footer` | Content placed around the generated sections of the root README. |
+| `sub_license`, `sub_header`, `sub_body`, `sub_footer` | Default content for generated subdirectory READMEs. |
+| `ignore_gitFiles` | Apply patterns from `.gitignore`; defaults to `true`. |
+| `ignore_gitIgnoreFiles` | Apply patterns from `.npmignore`; defaults to `true`. |
+| `ignore_files` | Additional gitignore-style patterns, including globs, directory rules, and negations. |
+| `ignore_defaults` | Ignore `node_modules/`, `dist/`, `coverage/`, and `build/`; defaults to `true`. |
+| `max_depth` | Maximum directory depth to traverse; defaults to `10`. |
+| `directories` | Exact per-directory patches for the eight `root_*` and `sub_*` content fields. |
+
+Directory override keys must be project-root-relative POSIX paths such as `src` or `packages/api`. Matching is exact and does not cascade: an override for `src` does not apply to `src/internal`. The root README cannot be overridden, and walker or ignore settings remain global. Set a content field to an empty string to clear it for one directory.
+
+## Examples
+
+- [`examples/minimal`](./examples/minimal/) — the smallest runnable setup.
+- [`examples/nested`](./examples/nested/) — nested directory generation.
+- [`examples/with-config`](./examples/with-config/) — custom global content and filtering.
+- [`examples/with-overrides`](./examples/with-overrides/) — exact per-directory content overrides.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and required checks.
+
+## License
+
+[MIT](./LICENSE)
+
+## Generated project overview
+
+The following block is maintained by `awesome-readme` itself.
+
 <!-- awesome-readme:start -->
 
 [![license](https://img.shields.io/github/license/marc-aurele-besner/awesome-readme.svg)](https://opensource.org/licenses/MIT)
@@ -12,81 +184,19 @@ d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D
 88ooo88 88   I8I   88 88ooooo '8bo.   88    88 88  88  88 88ooooo        88oobY' 88ooooo 88ooo88 88   88 88  88  88 88ooooo
 88~~~88 Y8   I8I   88 88~~~~~   'Y8b. 88    88 88  88  88 88~~~~~ C8888D 88'8b   88~~~~~ 88~~~88 88   88 88  88  88 88~~~~~
 88   88 '8b d8'8b d8' 88.     db   8D '8b  d8' 88  88  88 88.            88 '88. 88.     88   88 88  .8D 88  88  88 88.
-YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P 
+YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P
 ```
-
-
-## Install Awesome-Readme
-
-```
-npm i awesome-readme
-```
-
-Or
-
-```
-npm i awesome-readme -g
-```
-
-## Use Awesome-Readme
-
-```
-npx awesome-readme
-```
-
-## CLI options
-
-```
-Usage: awesome-readme [options]
-
-Options:
-  -h, --help            Show this help message and exit
-      --dry-run         Print what would be written without writing any file
-  -p, --path <dir>      Project root to generate READMEs for (default: current directory)
-  -c, --config <file>   Path to the config file (default: <path>/awesome-readme.config.js)
-      --root-only       Only write the root README, skip subdirectory READMEs
-      --force           Overwrite existing READMEs entirely, discarding their content
-      --if-missing      Only create READMEs for directories that do not have one
-```
-
-Existing READMEs are never clobbered: generated content lives between
-`<!-- awesome-readme:start -->` and `<!-- awesome-readme:end -->` markers
-and only that region is regenerated on the next run. A README without markers
-is left untouched unless `--force` is passed. To regenerate part of a
-hand-written README, wrap the section you want the tool to own with the two
-markers.
-
-Preview the output before touching your files:
-
-```
-npx awesome-readme --dry-run
-```
-
-Generate for another project, with a config living elsewhere:
-
-```
-npx awesome-readme --path ./packages/core --config ./readme.config.js
-```
-
-Add the markers to a hand-written README to opt into partial regeneration:
-
-```
-<!-- awesome-readme:start -->
-<!-- awesome-readme:end -->
-```
-
-Fill the gap with anything you want the tool to own (a tree, a badge list, an
-auto-generated file index, etc.) and the next run will refresh that block
-without touching the rest of the file.
 
 ## Directories
  - [.claude/](./.claude/) - [.vscode/](./.vscode/) - [examples/](./examples/) - [src/](./src/) - [test/](./test/)
 
  - [.npmignore](./.npmignore)
  - [.prettierrc](./.prettierrc)
+ - [CHANGELOG.md](./CHANGELOG.md)
  - [CONTRIBUTING.md](./CONTRIBUTING.md)
  - [LICENSE](./LICENSE)
  - [README.md](./README.md)
+ - [RELEASING.md](./RELEASING.md)
  - [awesome-readme.config.js](./awesome-readme.config.js)
  - [eslint.config.js](./eslint.config.js)
  - [package-lock.json](./package-lock.json)
@@ -94,108 +204,16 @@ without touching the rest of the file.
  - [tsconfig.json](./tsconfig.json)
 
 
-
-## Configuration with awesome-readme.config.js
-
-```
-module.exports = {
-    // Set figlet_text to a plain string and the tool will render it with the
-    // figlet package at build time (no need to hand-author ASCII art). Use
-    // figlet_font to pick a different font (defaults to "Standard"). Leave the
-    // pre-rendered figlet below in place if you want to use that instead.
-    // figlet_text: 'awesome-readme',
-    // figlet_font: 'Standard',
-    // By default a banner is auto-generated from `package.json` `name` when
-    // neither `figlet` nor `figlet_text` is set. Set `figlet_auto` to
-    // false to keep the banner blank, or to true to force auto-generation
-    // even when `figlet_text` is unset.
-    // figlet_auto: true,
-    figlet: `
-    .d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b
-    d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D 88'     d8' '8b 88  '8D 88'YbdP'88 88'
-    88ooo88 88   I8I   88 88ooooo '8bo.   88    88 88  88  88 88ooooo        88oobY' 88ooooo 88ooo88 88   88 88  88  88 88ooooo
-    88~~~88 Y8   I8I   88 88~~~~~   'Y8b. 88    88 88  88  88 88~~~~~ C8888D 88'8b   88~~~~~ 88~~~88 88   88 88  88  88 88~~~~~
-    88   88 '8b d8'8b d8' 88.     db   8D '8b  d8' 88  88  88 88.            88 '88. 88.     88   88 88  .8D 88  88  88 88.
-    YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P`,
-    root_license: `[![npm version](https://badge.fury.io/js/awesome-readme.svg)](https://badge.fury.io/js/awesome-readme)`,
-    root_header: `
-    ## Install Awesome-Readme
-    ```
-    npm i awesome-readme
-    ```
-    ## Use Awesome-Readme
-    ```
-    npx awesome-readme
-    ````,
-    root_body: `## Configuration with awesome-readme.config.js`,
-    root_footer: `## Don't hesitate to contribute to this project.`,
-    sub_license: `[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)`,
-    sub_header: `## About this directory`,
-    sub_body: `This directory is part of the awesome-readme project.`,
-    sub_footer: `## Don't hesitate to contribute to this project.`,
-    ignore_gitFiles: true,
-    ignore_gitIgnoreFiles: true,
-    // `ignore_files` accepts gitignore-style globs (`*.log`, `dist/`). On top of
-    // what is listed here, a small set of defaults (node_modules/, dist/,
-    // coverage/, build/) is merged in automatically; set `ignore_defaults` to
-    // false to opt out.
-    ignore_files: ['.prettierignore'],
-    ignore_defaults: true,
-    // `directories` patches the eight text fields for the matching directory
-    // only. Keys are project-root-relative POSIX paths and matching is exact
-    // (no cascade). The walker and ignore rules stay global, so the tree
-    // stays consistent across READMEs.
-    // directories: {
-    //   src: { sub_header: 'Source code' },
-    //   'src/internal': { sub_header: 'Internal helpers' }
-    // }
-}
-```
-
-### Per-directory overrides
-
-For monorepos and multi-package trees where different directories deserve
-their own copy, add a top-level `directories` block to the config. Keys
-are project-root-relative POSIX paths and matching is exact: an entry for
-`src` does **not** cascade to `src/internal`. Each value patches only
-the eight text fields (`root_/sub_ license/header/body/footer`) for the
-matching directory; ignore rules and `max_depth` stay global so the
-walker cannot drift between READMEs.
-
-```
-module.exports = {
-    sub_header: 'Default intro for every README',
-    sub_body: 'Default body',
-    directories: {
-        src: { sub_header: 'Source code' },
-        '.vscode': { sub_header: 'Editor settings' },
-        'src/hooks': { sub_header: 'Hooks', sub_body: 'Lifecycle scripts' }
-    }
-};
-```
-
-Rules:
-
-- Keys must be project-root-relative POSIX paths. `src`, `.vscode`
-  and `packages/api` are valid; leading slashes, backslashes, `..`
-  segments and the empty string are rejected.
-- Matching is **exact**. Unspecified directories keep the global
-  `sub_*` defaults — an override for `src` does not apply to
-  `src/hooks`.
-- The root README is never overridden. There is no empty-key form.
-- Empty-string values (e.g. `sub_footer: ''`) clear the section in the
-  targeted README only.
-- See `examples/with-overrides/` for a runnable demo.
-
-
 ## Directory Tree
 ```
 awesome-readme/
 ├─── .npmignore
 ├─── .prettierrc
+├─── CHANGELOG.md
 ├─── CONTRIBUTING.md
 ├─── LICENSE
 ├─── README.md
+├─── RELEASING.md
 ├─── awesome-readme.config.js
 ├─── eslint.config.js
 ├─── package-lock.json
@@ -268,6 +286,6 @@ awesome-readme/
     ├─── tree.test.js
     └─── walk.test.js
 ```
-## Don't hesitate to contribute to this project.
+
 
 <!-- awesome-readme:end -->
