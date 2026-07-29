@@ -20,7 +20,8 @@ npm run build         # compile src/ to dist/
 npm test              # build, then run the test suite
 ```
 
-`npm run lint:fix` (Prettier `--write`) will fix most formatting complaints for you.
+`npm run format` (Prettier `--write`) and `npm run lint:fix` (ESLint `--fix`)
+will fix most lint and formatting complaints for you.
 
 > **Note on TypeScript linting:** ESLint only covers `.js` files here. The project
 > builds with TypeScript 7, and `typescript-eslint` does not support the TS 7 API yet
@@ -90,7 +91,10 @@ further defined and clarified by project maintainers.
 ### Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at [INSERT EMAIL ADDRESS]. All
+reported privately through the project's
+[GitHub Security Advisories](https://github.com/marc-aurele-besner/awesome-readme/security/advisories/new)
+page, which creates a private channel between the reporter and the maintainers.
+All
 complaints will be reviewed and investigated and will result in a response that
 is deemed necessary and appropriate to the circumstances. The project team is
 obligated to maintain confidentiality with regard to the reporter of an incident.
