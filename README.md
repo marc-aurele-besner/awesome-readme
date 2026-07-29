@@ -74,6 +74,8 @@ npx awesome-readme --if-missing
 | `--root-only` | Write only the root README and skip subdirectory READMEs. |
 | `--force` | Replace existing READMEs entirely, including hand-written content. |
 | `--if-missing` | Create READMEs only in directories that do not already have one. |
+| `--template-root <file>` | Render the root README from a custom template file. |
+| `--template-sub <file>` | Render subdirectory READMEs from a custom template file. |
 
 `--force` and `--if-missing` cannot be combined.
 
@@ -128,7 +130,11 @@ module.exports = {
       sub_header: '## Internal helpers',
       sub_body: 'Private implementation details.'
     }
-  }
+  },
+
+  // Optional: point at a custom template file (see "Templates" below).
+  // template_root: './templates/root.md',
+  // template_sub: './templates/sub.md'
 };
 ```
 
@@ -148,8 +154,82 @@ module.exports = {
 | `ignore_defaults` | Ignore `node_modules/`, `dist/`, `coverage/`, and `build/`; defaults to `true`. |
 | `max_depth` | Maximum directory depth to traverse; defaults to `10`. |
 | `directories` | Exact per-directory patches for the eight `root_*` and `sub_*` content fields. |
+| `template_root` | Path to a custom template file for the root README (see [Templates](#templates)). |
+| `template_sub` | Path to a custom template file for subdirectory READMEs. |
 
 Directory override keys must be project-root-relative POSIX paths such as `src` or `packages/api`. Matching is exact and does not cascade: an override for `src` does not apply to `src/internal`. The root README cannot be overridden, and walker or ignore settings remain global. Set a content field to an empty string to clear it for one directory.
+
+## Templates
+
+The generated README is rendered through a small template instead of being assembled by string concatenation. The default templates ship with the tool and reproduce the existing layout section-for-section, so projects that do nothing get the same output they always did. To customize the layout, point at your own template file:
+
+```sh
+npx awesome-readme --template-root ./templates/root.md --template-sub ./templates/sub.md
+```
+
+The same paths can live in `awesome-readme.config.js` for projects that want to ship the layout alongside the rest of the configuration:
+
+```js
+module.exports = {
+  template_root: './templates/root.md',
+  template_sub: './templates/sub.md'
+};
+```
+
+CLI flags take precedence over the config, and both fall back to the bundled defaults when neither is supplied. A missing template file exits with `Template file not found: <absolute path>` so the error message points at the exact file the resolver looked for.
+
+### Supported syntax
+
+The renderer recognises three constructs:
+
+- `{{name}}` — substitute a value. Missing values render as the empty string. Dotted paths such as `{{this.role}}` walk an object chain, so loop entries expose their fields by name alongside `{{this}}`.
+- `{{#if name}}…{{/if}}` — render the body only when `name` is truthy (non-empty string, non-empty array, non-zero number, or `true`).
+- `{{#each name}}…{{/each}}` — render the body once per entry in `name`. Inside the body, `{{this}}` references the entry itself and object entries also expose their fields as bare names.
+
+Whitespace inside and around the markers is preserved verbatim, so authors control the newlines around placeholders by writing the template the way they want it rendered.
+
+### Variables
+
+Both default templates are written against the same variable names, so a custom template can be swapped in for either without learning a separate vocabulary.
+
+| Variable | Description |
+| --- | --- |
+| `name` | Heading text. For the root README this is `package.json` `name`; for a subdirectory it is the `parent / child` breadcrumb. |
+| `licenseBadge` | Markdown image badge derived from the project's license and repository slug. Empty when no slug is available. |
+| `license` | Value of `root_license` (root) or `sub_license` (sub). |
+| `figlet` | ASCII-art banner, already wrapped in a fenced code block. |
+| `header` | Value of `root_header` (root) or `sub_header` (sub). |
+| `body` | Value of `root_body` (root) or `sub_body` (sub). |
+| `footer` | Value of `root_footer` (root) or `sub_footer` (sub). |
+| `directories` | Rendered list of immediate subdirectories as `- [name/](./name/)` lines. Empty when the directory has none. |
+| `files` | Rendered list of immediate files as `- [name](./name)` lines. Empty when the directory has none. |
+| `tree` | The full directory tree, wrapped in a fenced code block. Empty when there is nothing to render. |
+| `previousUrl` | URL of the `[<- Previous]` link. Set for every subdirectory README; empty for the root. |
+| `description` | Extra prose rendered under the banner. Subdirectory READMEs only; empty for the root. |
+
+### Custom layout example
+
+```md
+<!-- templates/root.md -->
+# {{name}}
+{{figlet}}
+
+{{header}}
+
+{{#if directories}}## Directories
+{{directories}}{{/if}}
+{{#if files}}## Files
+{{files}}{{/if}}
+
+{{body}}
+
+{{#if tree}}## Project tree
+{{tree}}{{/if}}
+
+{{footer}}
+```
+
+Point the config at this file (`template_root: './templates/root.md'`) and the next run emits this layout instead of the default.
 
 ## Examples
 
@@ -157,6 +237,7 @@ Directory override keys must be project-root-relative POSIX paths such as `src` 
 - [`examples/nested`](./examples/nested/) — nested directory generation.
 - [`examples/with-config`](./examples/with-config/) — custom global content and filtering.
 - [`examples/with-overrides`](./examples/with-overrides/) — exact per-directory content overrides.
+- [`examples/with-templates`](./examples/with-templates/) — custom root and subdirectory templates.
 
 ## Contributing
 
