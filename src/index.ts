@@ -9,6 +9,7 @@ import buildReadme, { toTreeNodes } from './buildReadme';
 import { parseCliOptions, usage, type CliOptions } from './cli';
 import { parseDirectoryOverrides, getDirectoryKey, mergeOverride } from './directoryOverrides';
 import { renderTreeLines } from './tree';
+import { DEFAULT_ROOT_TEMPLATE, DEFAULT_SUB_TEMPLATE, loadTemplateFile, renderTemplate } from './template';
 import type { ExtraData } from './types';
 import { walkDirectory, flattenDirectories, DEFAULT_MAX_DEPTH, type DirectoryNode } from './walk';
 import { writeReadmeFile, type ReadmeWriteMode, type ReadmeWriteOptions } from './writeReadme';
@@ -208,6 +209,13 @@ ${rendered}
     currentFilesList += ` - [${file}](./${file})\n`;
   });
 
+  // Resolve templates once up front so a missing custom file fails fast
+  // before any READMEs are touched. CLI flags win over the config so users
+  // can preview a layout without editing the project file, then fall back to
+  // the bundled defaults when neither is supplied.
+  const rootTemplate = resolveTemplate(options.templateRoot, config?.template_root, DEFAULT_ROOT_TEMPLATE);
+  const subTemplate = resolveTemplate(options.templateSub, config?.template_sub, DEFAULT_SUB_TEMPLATE);
+
   /**
    * Emit one README per directory, at any depth.
    *
@@ -235,7 +243,8 @@ ${rendered}
         previousUrl: child.depth === 1 ? repositoryUrl : '../README.md',
         prefix: '   ',
         extraData: childExtraData,
-        writeOptions: subWriteOptions
+        writeOptions: subWriteOptions,
+        template: subTemplate
       });
       emitSubReadmes(child, title);
     });
@@ -247,19 +256,39 @@ ${rendered}
   // cannot drift apart between them at any depth.
   const treeLines: string[] = [`${repositoryName}/`, ...renderTreeLines(toTreeNodes(tree))];
   const directoryTree = `\`\`\`\n${treeLines.join('\n')}\n\`\`\``;
-  const buildReadmeData = `
-${licenseBadge}${licenseBadge ? '\n' : ''}${extraData.root_license}
-
-# ${repositoryName}
-${figlet}
-${extraData.root_header}
-${directoryFileList ? '## Directories\n' + directoryFileList + '\n' : ''}
-${currentFilesList ? currentFilesList : ''}
-${extraData.root_body}
-${directoryTree ? '## Directory Tree\n' + directoryTree : ''}
-${extraData.root_footer}
-`;
+  const rootVariables = {
+    name: repositoryName,
+    licenseBadge,
+    license: extraData.root_license,
+    figlet,
+    header: extraData.root_header,
+    directories: directoryFileList,
+    files: currentFilesList,
+    body: extraData.root_body,
+    tree: directoryTree,
+    footer: extraData.root_footer,
+    // The root README does not link to a "previous" page, but exposing the
+    // variable keeps the template vocabulary uniform across root and sub.
+    previousUrl: '',
+    description: ''
+  };
+  const buildReadmeData = renderTemplate(rootTemplate, rootVariables);
   writeReadmeFile(currentPath, buildReadmeData, rootWriteOptions);
+};
+
+/**
+ * Resolve a template string using the CLI/config/default precedence.
+ *
+ * The CLI flag overrides the config key (so `--template-root` wins over
+ * `template_root` in `awesome-readme.config.js`), and both fall back to the
+ * bundled default when neither is supplied. A relative path is resolved
+ * against the current working directory, matching the behaviour of
+ * `--config`.
+ */
+const resolveTemplate = (cliPath: string | undefined, configPath: unknown, fallback: string): string => {
+  if (typeof cliPath === 'string' && cliPath.length > 0) return loadTemplateFile(cliPath);
+  if (typeof configPath === 'string' && configPath.length > 0) return loadTemplateFile(configPath);
+  return fallback;
 };
 
 /**
