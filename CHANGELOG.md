@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   major toolchain bumps now open a normal PR for review instead of
   landing silently. The policy is documented in `CONTRIBUTING.md`.
 
+### Fixed
+
+- Dropped the deprecated `jsxBracketSameLine` option from `.prettierrc`.
+  The repo contains no JSX or TSX, so the flag had no effect; removing it
+  silences the `[warn] jsxBracketSameLine is deprecated.` notice that
+  appeared on every `npm run format:check` invocation.
+
 ## [0.2.0] - 2026-07-28
 
 ### Added
