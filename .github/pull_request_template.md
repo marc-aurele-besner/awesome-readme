@@ -5,10 +5,17 @@ request... were there any bugs you had fixed? If so, mention them. If
 these bugs have open GitHub issues, be sure to tag them here as well,
 to keep the conversation linked together. -->
 
+### Checklist
+
+- [ ] `npm run lint`, `npm run format:check`, `npm run typecheck`,
+      `npm run build`, and `npm test` all pass locally.
+- [ ] User-facing changes are documented in `README.md` and/or
+      `CHANGELOG.md` (under `[Unreleased]`).
+
 ### Other Information
 
-<!-- If there's anything else that's important and relevant to your pull
-request, mention that information here. This could include
+<!-- If there's anything else that's important and relevant to your
+pull request, mention that information here. This could include
 benchmarks, or other information.
 
 Thanks for contributing! -->
