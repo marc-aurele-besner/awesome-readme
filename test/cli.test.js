@@ -213,7 +213,7 @@ test('subdirectory trees use the same connectors and last-child rule as the root
     assert.match(rootReadme, /└─── beta\//);
     // Subtree lines under a non-last directory use the `│   ` continuation
     // column so the parent's connector column continues.
-    assert.match(rootReadme, /│   └─── a\.txt/);
+    assert.match(rootReadme, /│ {3}└─── a\.txt/);
 
     const alphaReadme = fs.readFileSync(path.join(root, 'alpha', 'README.md'), 'utf8');
     // Subdirectory tree: a single file is the last child, so it uses
