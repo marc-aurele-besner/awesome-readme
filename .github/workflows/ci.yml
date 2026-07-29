@@ -41,5 +41,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Run `node --test` directly (not `npm test`) so we don't rebuild:
+      # `npm test` is `npm run build && node --test`, and the Build step above
+      # already produced `dist/`. Rebuilding here would just double the work and
+      # obscure whether a failure came from the build or from the tests.
       - name: Test
-        run: npm test
+        run: node --test
