@@ -6,6 +6,7 @@ import * as path from 'path';
 import figletLib from 'figlet';
 
 import buildReadme, { toTreeNodes } from './buildReadme';
+import { buildLicenseBadge, deriveRepositorySlug, deriveRepositoryUrl } from './badge';
 import { parseCliOptions, usage, type CliOptions } from './cli';
 import { parseDirectoryOverrides, getDirectoryKey, mergeOverride } from './directoryOverrides';
 import { renderTreeLines } from './tree';
@@ -148,33 +149,13 @@ ${rendered}
       console.log('\x1b[31m', 'Failed to auto-generate figlet for "' + String(repositoryName) + '" with font "' + figletFont + '":', '\x1b[0m', err);
     }
   }
-  let repositoryUrl = '';
-  if (typeof repository === 'string')
-    if (repository.startsWith('git+')) repositoryUrl = repository.replace('git+', '').replace('.git', '');
-    else repositoryUrl = repository;
-  else if (typeof repository === 'object') {
-    repositoryUrl = repository.url.substring(4);
-    repositoryUrl = repositoryUrl.substring(0, repositoryUrl.length - 4);
-  }
+  const repositoryUrl = deriveRepositoryUrl(repository);
   // Derive the GitHub "owner/repo" slug from the repository URL so license
   // badges point at the actual project instead of a hardcoded third-party
   // repo. Accepts https and ssh-style URLs, and falls back to an empty string
   // when no slug can be derived (e.g. non-GitHub remotes or missing metadata).
-  const deriveRepositorySlug = (url: string): string => {
-    if (!url) return '';
-    const cleaned = url
-      .replace(/^git\+/, '')
-      .replace(/\.git$/, '')
-      .replace(/\/+$/, '');
-    // SSH-style: git@github.com:owner/repo  → matches after the colon
-    const sshMatch = cleaned.match(/[/:]([^/]+\/[^/]+)$/);
-    if (sshMatch) return sshMatch[1];
-    return '';
-  };
   const repositorySlug = deriveRepositorySlug(repositoryUrl);
-  const licenseBadge = repositorySlug
-    ? `[![license](https://img.shields.io/github/license/${repositorySlug}.svg)](https://opensource.org/licenses/${repositoryLicensee})`
-    : '';
+  const licenseBadge = buildLicenseBadge(repositorySlug, repositoryLicensee);
   // List of all the files in the current directory, with the shared ignore
   // rules applied. The same helper is used for every subdirectory walk so a
   // file ignored here cannot reappear in a sub-README or subdirectory tree.
