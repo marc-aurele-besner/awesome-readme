@@ -17,7 +17,7 @@ YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD
 
 ## About this directory
 
- - [README.md](./README.md) - [cli.test.js](./cli.test.js) - [filterFiles.test.js](./filterFiles.test.js) - [preserveReadme.test.js](./preserveReadme.test.js) - [tree.test.js](./tree.test.js) - [walk.test.js](./walk.test.js)
+ - [README.md](./README.md) - [cli.test.js](./cli.test.js) - [directoryOverrides.test.js](./directoryOverrides.test.js) - [filterFiles.test.js](./filterFiles.test.js) - [preserveReadme.test.js](./preserveReadme.test.js) - [tree.test.js](./tree.test.js) - [walk.test.js](./walk.test.js)
 This directory is part of the awesome-readme project.
 ## Directory Tree
 [<- Previous](https://github.com/marc-aurele-besner/awesome-readme)
@@ -25,6 +25,7 @@ This directory is part of the awesome-readme project.
 test/
    ├─── README.md
    ├─── cli.test.js
+   ├─── directoryOverrides.test.js
    ├─── filterFiles.test.js
    ├─── preserveReadme.test.js
    ├─── tree.test.js
