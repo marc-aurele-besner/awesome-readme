@@ -54,17 +54,18 @@ const buildMainReadme = (options: Partial<BuildOptions> = {}): void => {
     // `ignore_defaults: false`.
     ignore_defaults: true
   };
-  let figlet = `
-\`\`\`
-.d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b
-d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D 88'     d8' '8b 88  '8D 88'YbdP'88 88'
-88ooo88 88   I8I   88 88ooooo '8bo.   88    88 88  88  88 88ooooo        88oobY' 88ooooo 88ooo88 88   88 88  88  88 88ooooo
-88~~~88 Y8   I8I   88 88~~~~~   'Y8b. 88    88 88  88  88 88~~~~~ C8888D 88'8b   88~~~~~ 88~~~88 88   88 88  88  88 88~~~~~
-88   88 '8b d8'8b d8' 88.     db   8D '8b  d8' 88  88  88 88.            88 '88. 88.     88   88 88  .8D 88  88  88 88.
-YP   YP  '8b8' '8d8'  Y88888P '8888Y'  'Y88P'  YP  YP  YP Y88888P        88   YD Y88888P YP   YP Y8888D' YP  YP  YP Y88888P
-\`\`\``;
-
-  console.log('\x1b[32m', figlet, '\x1b[0m');
+  // The banner used to ship as a hand-authored "awesome-readme" string. It now
+  // starts empty so the auto-generation step below can render a banner from
+  // the project name whenever nothing else supplies one, and so opting out
+  // leaves a blank banner rather than a hardcoded one.
+  let figlet = '';
+  // `figlet_auto` defaults to true so a freshly generated README gets a banner
+  // derived from `package.json` `name`. Setting it to false in the config keeps
+  // the banner empty.
+  let figletAuto = true;
+  // `figlet_font` selects the font used by both `figlet_text` and the
+  // auto-generated banner so the two paths stay consistent.
+  let figletFont = 'Standard';
   // An explicit `--config` must exist; the default file stays optional.
   const configPath = options.config ? path.resolve(options.config) : path.join(currentPath, DEFAULT_CONFIG_FILE);
   if (options.config && !fs.existsSync(configPath)) throw new Error(`Config file not found: ${configPath}`);
@@ -91,21 +92,41 @@ ${config.figlet}
     if (config.ignore_gitIgnoreFiles !== undefined) extraData.ignore_gitIgnoreFiles = config.ignore_gitIgnoreFiles;
     if (config.ignore_files !== undefined && config.ignore_files.length > 0) extraData.ignore_files = config.ignore_files;
     if (config.ignore_defaults !== undefined) extraData.ignore_defaults = config.ignore_defaults;
+    // `figlet_auto` opt-out. Defaults to true above; explicit `false` keeps
+    // the banner empty even when nothing else supplies one.
+    if (config.figlet_auto !== undefined) figletAuto = config.figlet_auto !== false;
+    // `figlet_font` shared by `figlet_text` and the auto-generated banner so a
+    // font choice applies consistently to both paths.
+    if (typeof config.figlet_font === 'string' && config.figlet_font.length > 0) figletFont = config.figlet_font;
     // When `figlet_text` is provided, render it with the figlet package so the
     // user does not have to hand-author the ASCII art. Pre-rendered `figlet`
     // strings still win so existing configs keep working.
     if (config.figlet_text !== undefined) {
-      const font = typeof config.figlet_font === 'string' && config.figlet_font.length > 0 ? config.figlet_font : 'Standard';
       try {
-        const rendered = figletLib.textSync(String(config.figlet_text), { font });
+        const rendered = figletLib.textSync(String(config.figlet_text), { font: figletFont });
         figlet = `
 \`\`\`
 ${rendered}
 \`\`\``;
-        console.log('\x1b[33m', 'Generated figlet from figlet_text using font "' + font + '"', '\x1b[0m');
+        console.log('\x1b[33m', 'Generated figlet from figlet_text using font "' + figletFont + '"', '\x1b[0m');
       } catch (err) {
-        console.log('\x1b[31m', 'Failed to generate figlet for "' + String(config.figlet_text) + '" with font "' + font + '":', '\x1b[0m', err);
+        console.log('\x1b[31m', 'Failed to generate figlet for "' + String(config.figlet_text) + '" with font "' + figletFont + '":', '\x1b[0m', err);
       }
+    }
+  }
+  // Auto-generate the banner from `package.json` `name` when no other source
+  // supplied one. Runs once whether or not a config file exists, so the
+  // zero-config path also benefits.
+  if (figlet === '' && figletAuto && repositoryName) {
+    try {
+      const rendered = figletLib.textSync(String(repositoryName), { font: figletFont });
+      figlet = `
+\`\`\`
+${rendered}
+\`\`\``;
+      console.log('\x1b[33m', 'Auto-generated figlet from package.json "name" using font "' + figletFont + '"', '\x1b[0m');
+    } catch (err) {
+      console.log('\x1b[31m', 'Failed to auto-generate figlet for "' + String(repositoryName) + '" with font "' + figletFont + '":', '\x1b[0m', err);
     }
   }
   let repositoryUrl = '';

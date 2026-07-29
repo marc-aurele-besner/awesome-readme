@@ -6,6 +6,9 @@ const { test } = require('node:test');
 
 const { parseCliOptions, usage } = require('../dist/cli');
 const { main } = require('../dist/index');
+// Used by the auto-generated-banner tests to compare against the expected
+// figlet output for a given name and font combination.
+const figlet = require('figlet');
 
 // Every generated README is announced on stdout, and the dry-run notices go
 // there too, so tests capture console output instead of shelling out.
@@ -272,6 +275,166 @@ test('generated trees match the issue #82 fixture', () => {
     const docsTree = extractTree(fs.readFileSync(path.join(root, 'docs', 'README.md'), 'utf8'));
     const expectedDocsTree = ['docs/', '   └─── notes.md'].join('\n');
     assert.strictEqual(docsTree, expectedDocsTree);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #88: when the user runs the tool with no config, the banner
+// is auto-generated from `package.json` `name` using the figlet library. The
+// same `Standard` font is used by both `figlet_text` and the auto-generated
+// banner so the layout stays consistent across both code paths.
+test('auto-generates a figlet banner from package.json name when no config is provided', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-figlet-auto-'));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+
+  try {
+    const { result, stdout } = captureOutput(() => main(['--path', root]));
+
+    assert.strictEqual(result, 0);
+    // The renderer logs a status line for the auto-generation path.
+    assert.match(stdout, /Auto-generated figlet from package\.json "name" using font "Standard"/);
+
+    const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    // The README should contain the figlet text wrapped in its own fenced
+    // block. The figlet output contains characters that have meaning in
+    // regular expressions (`(`, `)`, `|`, `\`, `_`), so a substring check is
+    // used here to avoid escaping them. The renderer template literal inserts
+    // a blank line between the banner and the closing fence.
+    const expectedBanner = figlet.textSync('demo', { font: 'Standard' }).replace(/\n$/, '');
+    const openingFence = '\n```\n' + expectedBanner;
+    assert.ok(readme.includes(openingFence), 'README should contain the auto-generated figlet banner inside its own fenced block');
+    const closingIndex = readme.indexOf(openingFence) + openingFence.length;
+    assert.ok(closingIndex > 0 && /^\n+```/m.test(readme.slice(closingIndex)), 'README should close the figlet banner fence correctly');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #88: an explicit `figlet` string in the config wins over the
+// auto-generated banner, so existing configs keep their custom art.
+test('config.figlet wins over the auto-generated banner', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-figlet-explicit-'));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+  fs.writeFileSync(path.join(root, 'awesome-readme.config.js'), "module.exports = { figlet: 'CUSTOM-ASCII-ART' };\n");
+
+  try {
+    const { result, stdout } = captureOutput(() => main(['--path', root]));
+
+    assert.strictEqual(result, 0);
+    // The "auto-generated" log is not emitted when a figlet string is provided.
+    assert.doesNotMatch(stdout, /Auto-generated figlet/);
+
+    const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    assert.match(readme, /CUSTOM-ASCII-ART/);
+    // The auto-generated figlet for "demo" must NOT appear. Use the second
+    // rendered line as a fingerprint so the assertion does not have to deal
+    // with the figlet output's `(`, `|`, etc. characters being regex-special.
+    const demoLineFingerprint = figlet.textSync('demo', { font: 'Standard' }).split('\n')[1];
+    assert.ok(!readme.includes(demoLineFingerprint), 'README must not contain the auto-generated figlet when an explicit figlet is set');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #88: `figlet_text` plus `figlet_font` still works after the
+// refactor, and the font choice applies consistently to both this path and
+// the auto-generated banner.
+test('config.figlet_text with figlet_font renders the configured banner', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-figlet-text-'));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+  fs.writeFileSync(path.join(root, 'awesome-readme.config.js'), "module.exports = { figlet_text: 'pretty', figlet_font: 'Big' };\n");
+
+  try {
+    const { result, stdout } = captureOutput(() => main(['--path', root]));
+
+    assert.strictEqual(result, 0);
+    assert.match(stdout, /Generated figlet from figlet_text using font "Big"/);
+
+    const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    const expected = figlet.textSync('pretty', { font: 'Big' }).replace(/\n$/, '');
+    const openingFence = '\n```\n' + expected;
+    assert.ok(readme.includes(openingFence), 'README should contain the figlet_text-rendered banner inside its own fenced block');
+    const closingIndex = readme.indexOf(openingFence) + openingFence.length;
+    assert.ok(closingIndex > 0 && /^\n+```/m.test(readme.slice(closingIndex)), 'README should close the figlet_text banner fence correctly');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #88: opting out via `figlet_auto: false` suppresses the
+// auto-generated banner, and an explicit `figlet_text` still wins because it
+// is treated as the user's deliberate choice.
+test('figlet_auto: false suppresses auto-generation', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-figlet-optout-'));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+  fs.writeFileSync(path.join(root, 'awesome-readme.config.js'), "module.exports = { figlet_auto: false };\n");
+
+  try {
+    const { result, stdout } = captureOutput(() => main(['--path', root]));
+
+    assert.strictEqual(result, 0);
+    assert.doesNotMatch(stdout, /Auto-generated figlet/);
+
+    const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    // The figlet text from `textSync('demo', Standard)` must NOT appear.
+    const demoLineFingerprint = figlet.textSync('demo', { font: 'Standard' }).split('\n')[1];
+    assert.ok(!readme.includes(demoLineFingerprint), 'README must not contain the auto-generated figlet when figlet_auto is false');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #88: `figlet_auto` is also honoured when a config file is
+// absent, and a manual config flag can force-enable it even when the user
+// provides neither `figlet` nor `figlet_text`.
+test('figlet_auto: true forces auto-generation even with an empty config file', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-figlet-forced-'));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+  // An empty config file (still counts as "config exists") with the auto
+  // flag explicitly on — without this, auto-gen must already be the default.
+  fs.writeFileSync(path.join(root, 'awesome-readme.config.js'), "module.exports = { figlet_auto: true };\n");
+
+  try {
+    const { result, stdout } = captureOutput(() => main(['--path', root]));
+
+    assert.strictEqual(result, 0);
+    assert.match(stdout, /Auto-generated figlet from package\.json "name" using font "Standard"/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
