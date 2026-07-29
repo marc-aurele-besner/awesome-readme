@@ -84,6 +84,11 @@ module.exports = {
     // pre-rendered figlet below in place if you want to use that instead.
     // figlet_text: 'awesome-readme',
     // figlet_font: 'Standard',
+    // By default a banner is auto-generated from `package.json` `name` when
+    // neither `figlet` nor `figlet_text` is set. Set `figlet_auto` to
+    // false to keep the banner blank, or to true to force auto-generation
+    // even when `figlet_text` is unset.
+    // figlet_auto: true,
     figlet: `
     .d8b.  db   d8b   db d88888b .d8888.  .d88b.  .88b  d88. d88888b        d8888b. d88888b  .d8b.  d8888b. .88b  d88. d88888b
     d8' '8b 88   I8I   88 88'     88'  YP .8P  Y8. 88'YbdP'88 88'            88  '8D 88'     d8' '8b 88  '8D 88'YbdP'88 88'
