@@ -20,7 +20,9 @@
       "addLabels": ["optional"]
     },
     {
-      "matchDepTypes": ["minor", "patch", "devDependencies"],
+      "description": "Automerge only patch-level bumps of devDependencies. Minor bumps (and runtime deps) still need a human eye until tests + typecheck cover more behavior. See issue #97.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
       "automerge": true,
       "automergeType": "pr"
     }

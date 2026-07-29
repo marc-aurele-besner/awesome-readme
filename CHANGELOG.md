@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Renovate now only automerges patch-level bumps of `devDependencies`.
+  The previous rule mixed update types into `matchDepTypes`, which made
+  it effectively allow every devDep bump of every severity; minor and
+  major toolchain bumps now open a normal PR for review instead of
+  landing silently. The policy is documented in `CONTRIBUTING.md`.
+
 ## [0.2.0] - 2026-07-28
 
 ### Added

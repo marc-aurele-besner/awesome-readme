@@ -43,6 +43,26 @@ Version bumps and npm publishing happen at release time, not per PR. The
 release process is documented in [`RELEASING.md`](./RELEASING.md); the
 versioning scheme is [SemVer](http://semver.org/).
 
+## Renovate policy
+
+Renovate runs on this repo with a deliberately narrow automerge scope. The
+active rule in [`.github/renovate.json`](./.github/renovate.json) is:
+
+- **`devDependencies` at `patch` only** are automerged.
+- Everything else — minor/major bumps, runtime `dependencies`, and any
+  peer/optional bumps — opens a normal PR for review.
+
+The rule used to read `matchDepTypes: ["minor", "patch", "devDependencies"]`,
+which mixed invalid values into the array (`minor` and `patch` are update
+types, not dependency types) and effectively let every devDep bump of every
+severity through. Even with the test + typecheck matrix now gating CI, we
+keep automerge tight on purpose: toolchain majors (e.g. ESLint, TypeScript)
+have historically broken the project, and a noisy auto-merge queue is worse
+than a small one.
+
+Reopen the scope if/when the test suite grows to cover generation
+end-to-end and a release process exists to roll back bad bumps.
+
 ## Code of Conduct
 
 ### Our Pledge
