@@ -14,9 +14,10 @@
   "scripts": {
     "awesome-readme": "node ./dist/index.js",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "lint:fix": "prettier --write \"src/**/*.{js,ts}\"",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{js,ts}\"",
     "format:check": "prettier --check \"src/**/*.{js,ts}\"",
+    "typecheck": "tsc --noEmit",
     "build": "tsc",
     "test": "npm run build && node --test",
     "prepublishOnly": "npm run build"
