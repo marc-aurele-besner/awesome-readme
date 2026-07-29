@@ -49,4 +49,42 @@ export const renderTreeRows = (entries: TreeEntry[]): string[] => {
   return lines;
 };
 
+/**
+ * An entry that may carry its own children, so a whole tree can be rendered
+ * in one call instead of the caller stitching level-by-level output together.
+ */
+export interface TreeNode extends TreeEntry {
+  children?: TreeNode[];
+}
+
+/**
+ * Render a tree of arbitrary depth.
+ *
+ * Files are emitted first, then directories, each group closing on its own
+ * `└───` — that is the layout the root README has always produced, and it is
+ * now applied at every level so a subdirectory tree looks the same whether it
+ * is read in the root README or in its own README.
+ *
+ * A directory's children are indented by the continuation column of their
+ * parent: `│   ` while more directories follow at that level, `    ` once the
+ * parent is the last one, so the vertical bars stop where the branch ends.
+ * The nesting used to be done by hand in `src/index.ts` for exactly one level,
+ * which is why deeper directories never made it into the tree.
+ */
+export const renderTreeLines = (nodes: TreeNode[]): string[] => {
+  const files = nodes.filter((node) => !node.isDirectory);
+  const directories = nodes.filter((node) => node.isDirectory);
+  const lines: string[] = [...renderTreeRows(files)];
+  const directoryRows = renderTreeRows(directories);
+
+  directories.forEach((directory, index) => {
+    const isLast = index === directories.length - 1;
+    const childIndent = isLast ? '    ' : '│   ';
+    lines.push(directoryRows[index]);
+    renderTreeLines(directory.children ?? []).forEach((line) => lines.push(`${childIndent}${line}`));
+  });
+
+  return lines;
+};
+
 export default renderTreeRows;

@@ -1,7 +1,7 @@
 const assert = require('node:assert');
 const { test } = require('node:test');
 
-const { renderTreeRows } = require('../dist/tree');
+const { renderTreeRows, renderTreeLines } = require('../dist/tree');
 
 test('renderTreeRows emits a single line per entry in the given order', () => {
   const entries = [
@@ -96,4 +96,63 @@ test('renderTreeRows matches the issue #82 fixture tree', () => {
   ].join('\n');
 
   assert.strictEqual(tree, expected);
+});
+
+// Coverage for #81: the nesting used to be unrolled by hand for a single
+// level in `src/index.ts`, so a grandchild directory never made it into any
+// tree. `renderTreeLines` recurses instead.
+test('renderTreeLines nests children of arbitrary depth', () => {
+  const nodes = [
+    { name: 'README.md', isDirectory: false },
+    {
+      name: 'src',
+      isDirectory: true,
+      children: [
+        { name: 'index.ts', isDirectory: false },
+        {
+          name: 'deep',
+          isDirectory: true,
+          children: [
+            { name: 'deeper', isDirectory: true, children: [{ name: 'leaf.ts', isDirectory: false }] }
+          ]
+        }
+      ]
+    }
+  ];
+
+  assert.deepStrictEqual(renderTreeLines(nodes), [
+    '└─── README.md',
+    '└─── src/',
+    '    └─── index.ts',
+    '    └─── deep/',
+    '        └─── deeper/',
+    '            └─── leaf.ts'
+  ]);
+});
+
+test('renderTreeLines keeps the continuation column open while siblings follow', () => {
+  const nodes = [
+    { name: 'alpha', isDirectory: true, children: [{ name: 'a.txt', isDirectory: false }] },
+    { name: 'beta', isDirectory: true, children: [{ name: 'b.txt', isDirectory: false }] }
+  ];
+
+  assert.deepStrictEqual(renderTreeLines(nodes), [
+    '├─── alpha/',
+    '│   └─── a.txt',
+    '└─── beta/',
+    '    └─── b.txt'
+  ]);
+});
+
+test('renderTreeLines renders files before directories at every level', () => {
+  const nodes = [
+    { name: 'src', isDirectory: true, children: [] },
+    { name: 'package.json', isDirectory: false }
+  ];
+
+  assert.deepStrictEqual(renderTreeLines(nodes), ['└─── package.json', '└─── src/']);
+});
+
+test('renderTreeLines returns an empty array for no nodes', () => {
+  assert.deepStrictEqual(renderTreeLines([]), []);
 });

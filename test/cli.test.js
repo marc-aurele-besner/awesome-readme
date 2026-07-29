@@ -44,6 +44,16 @@ const makeProject = () => {
   return root;
 };
 
+// The root README has the figlet code block then the tree block; the
+// subdirectory README has a `[<- Previous](url)` link line between the
+// `## Directory Tree` heading and the tree's fence. The tree is always the
+// last fenced block, so grab that one and strip its fences.
+const extractTree = (readme) => {
+  const blocks = readme.match(/```\n[\s\S]*?\n```/g);
+  if (!blocks || blocks.length === 0) return '';
+  return blocks[blocks.length - 1].replace(/^```\n/, '').replace(/\n```$/, '');
+};
+
 test('parseCliOptions defaults every flag to off', () => {
   assert.deepStrictEqual(parseCliOptions([]), {
     help: false,
@@ -252,18 +262,6 @@ test('generated trees match the issue #82 fixture', () => {
   fs.mkdirSync(path.join(root, 'src'));
   fs.writeFileSync(path.join(root, 'docs', 'notes.md'), '');
 
-  const extractTree = (readme) => {
-    // The root README has the figlet code block then the tree block; the
-    // subdirectory README has a `[<- Previous](url)` link line between the
-    // `## Directory Tree` heading and the tree's fence. Anchor on the
-    // heading and grab the last fenced block, which is always the tree.
-    const blocks = readme.match(/```\n[\s\S]*?\n```/g);
-    if (!blocks || blocks.length === 0) return '';
-    const treeBlock = blocks[blocks.length - 1];
-    // Strip the surrounding fences.
-    return treeBlock.replace(/^```\n/, '').replace(/\n```$/, '');
-  };
-
   try {
     captureOutput(() => main(['--path', root, '--force']));
 
@@ -281,6 +279,105 @@ test('generated trees match the issue #82 fixture', () => {
     const docsTree = extractTree(fs.readFileSync(path.join(root, 'docs', 'README.md'), 'utf8'));
     const expectedDocsTree = ['docs/', '   └─── notes.md'].join('\n');
     assert.strictEqual(docsTree, expectedDocsTree);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Coverage for #81: the walk used to be unrolled by hand for two levels, so
+// `src/a/b/` got neither a README nor a line in any tree.
+const makeDeepProject = (prefix) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  fs.writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({
+      name: 'demo',
+      license: 'MIT',
+      repository: { type: 'git', url: 'git+https://github.com/demo/demo.git' }
+    })
+  );
+  fs.mkdirSync(path.join(root, 'src', 'a', 'b', 'c'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src', 'index.ts'), '');
+  fs.writeFileSync(path.join(root, 'src', 'a', 'b', 'c', 'leaf.ts'), '');
+  return root;
+};
+
+test('READMEs are generated for directories nested more than two levels deep', () => {
+  const root = makeDeepProject('awesome-readme-deep-');
+
+  try {
+    const { result } = captureOutput(() => main(['--path', root, '--force']));
+
+    assert.strictEqual(result, 0);
+    for (const directory of [['src'], ['src', 'a'], ['src', 'a', 'b'], ['src', 'a', 'b', 'c']]) {
+      assert.strictEqual(fs.existsSync(path.join(root, ...directory, 'README.md')), true, `${directory.join('/')} should have a README`);
+    }
+    // Deep READMEs link back to their parent README rather than the repo root.
+    const deepReadme = fs.readFileSync(path.join(root, 'src', 'a', 'README.md'), 'utf8');
+    assert.match(deepReadme, /\[<- Previous\]\(\.\.\/README\.md\)/);
+    // Direct children keep the repository link they have always had.
+    const srcReadme = fs.readFileSync(path.join(root, 'src', 'README.md'), 'utf8');
+    assert.match(srcReadme, /\[<- Previous\]\(https:\/\/github\.com\/demo\/demo\)/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('the root tree nests every level with the right continuation column', () => {
+  const root = makeDeepProject('awesome-readme-deep-tree-');
+
+  try {
+    // `--force` so the README files exist by the time the root tree is
+    // rendered — the walk happens before the writes, otherwise none of the
+    // generated `README.md` files would show up in the tree.
+    captureOutput(() => main(['--path', root, '--force']));
+
+    const rootTree = extractTree(fs.readFileSync(path.join(root, 'README.md'), 'utf8'));
+    assert.strictEqual(
+      rootTree,
+      [
+        'demo/',
+        '└─── package.json',
+        '└─── src/',
+        '    └─── index.ts',
+        '    └─── a/',
+        '        └─── b/',
+        '            └─── c/',
+        '                └─── leaf.ts'
+      ].join('\n')
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a subdirectory README shows its whole subtree, not just its children', () => {
+  const root = makeDeepProject('awesome-readme-deep-sub-');
+
+  try {
+    captureOutput(() => main(['--path', root, '--force']));
+
+    const srcTree = extractTree(fs.readFileSync(path.join(root, 'src', 'README.md'), 'utf8'));
+    assert.match(srcTree, /^src\//);
+    assert.match(srcTree, /leaf\.ts/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('max_depth caps how deep the walk goes', () => {
+  const root = makeDeepProject('awesome-readme-max-depth-');
+  fs.writeFileSync(path.join(root, 'awesome-readme.config.js'), 'module.exports = { max_depth: 2 };\n');
+
+  try {
+    const { result, stdout } = captureOutput(() => main(['--path', root, '--force']));
+
+    assert.strictEqual(result, 0);
+    assert.match(stdout, /max_depth: 2/);
+    assert.strictEqual(fs.existsSync(path.join(root, 'src', 'a', 'README.md')), true);
+    assert.strictEqual(fs.existsSync(path.join(root, 'src', 'a', 'b', 'README.md')), false);
+    // Nothing below the limit leaks into the root tree either.
+    assert.doesNotMatch(fs.readFileSync(path.join(root, 'README.md'), 'utf8'), /leaf\.ts/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
