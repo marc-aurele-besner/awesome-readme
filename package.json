@@ -9,7 +9,7 @@
   "typings": "dist/index.d.ts",
   "types": "dist/index.d.ts",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "awesome-readme": "node ./dist/index.js",
