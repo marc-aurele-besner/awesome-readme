@@ -48,7 +48,16 @@ Options:
   -p, --path <dir>      Project root to generate READMEs for (default: current directory)
   -c, --config <file>   Path to the config file (default: <path>/awesome-readme.config.js)
       --root-only       Only write the root README, skip subdirectory READMEs
+      --force           Overwrite existing READMEs entirely, discarding their content
+      --if-missing      Only create READMEs for directories that do not have one
 \`\`\`
+
+Existing READMEs are never clobbered: generated content lives between
+\`<!-- awesome-readme:start -->\` and \`<!-- awesome-readme:end -->\` markers
+and only that region is regenerated on the next run. A README without markers
+is left untouched unless \`--force\` is passed. To regenerate part of a
+hand-written README, wrap the section you want the tool to own with the two
+markers.
 
 Preview the output before touching your files:
 
@@ -61,6 +70,17 @@ Generate for another project, with a config living elsewhere:
 \`\`\`
 npx awesome-readme --path ./packages/core --config ./readme.config.js
 \`\`\`
+
+Add the markers to a hand-written README to opt into partial regeneration:
+
+\`\`\`
+<!-- awesome-readme:start -->
+<!-- awesome-readme:end -->
+\`\`\`
+
+Fill the gap with anything you want the tool to own (a tree, a badge list, an
+auto-generated file index, etc.) and the next run will refresh that block
+without touching the rest of the file.
 `,
   root_body: `
 

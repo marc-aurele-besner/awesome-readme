@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { listFilteredFiles } from './filterFiles';
 import { renderTreeRows, type TreeEntry } from './tree';
 import type { ExtraData } from './types';
-import { writeReadmeFile, type ReadmeWriteMode } from './writeReadme';
+import { writeReadmeFile, type ReadmeWriteMode, type ReadmeWriteOptions } from './writeReadme';
 
 const buildReadme = (
   file: string,
@@ -16,8 +16,9 @@ const buildReadme = (
   prefix = '',
   extraData: ExtraData,
   // The directory tree is returned to the caller regardless of the mode, so
-  // `--root-only` and `--dry-run` still render a complete root README.
-  mode: ReadmeWriteMode = 'write'
+  // `--root-only` and `--dry-run` still render a complete root README. Accepts
+  // either a bare mode or the full write options (`--force`, `--if-missing`).
+  writeOptions: ReadmeWriteMode | ReadmeWriteOptions = 'write'
 ): string | undefined => {
   if (currentPath) {
     // Shared with the root walk so `ignore_files`, `.git*` and `.gitignore`
@@ -54,7 +55,7 @@ ${extraData.sub_body}
 ${directoryTree ? '## Directory Tree\n[<- Previous](' + repositoryUrl + ')\n' + directoryTreePrefix + directoryTree + '\n' + directoryTreeSuffix : ''}
 ${extraData.sub_footer}
 `;
-    writeReadmeFile(currentPath, buildReadme, mode);
+    writeReadmeFile(currentPath, buildReadme, writeOptions);
     return directoryTree;
   }
 };

@@ -10,7 +10,7 @@ import { parseCliOptions, usage, type CliOptions } from './cli';
 import { listFilteredFiles } from './filterFiles';
 import { renderTreeRows, type TreeEntry } from './tree';
 import type { ExtraData } from './types';
-import { writeReadmeFile, type ReadmeWriteMode } from './writeReadme';
+import { writeReadmeFile, type ReadmeWriteMode, type ReadmeWriteOptions } from './writeReadme';
 
 const DEFAULT_CONFIG_FILE = 'awesome-readme.config.js';
 
@@ -26,6 +26,10 @@ const buildMainReadme = (options: Partial<BuildOptions> = {}): void => {
   // `--root-only` still walks subdirectories because the root directory tree is
   // built from their listings; it just never emits their READMEs.
   const subMode: ReadmeWriteMode = rootOnly ? 'skip' : rootMode;
+  // Content-preservation flags apply to every README the run touches, root and
+  // subdirectories alike.
+  const rootWriteOptions: ReadmeWriteOptions = { mode: rootMode, force: options.force === true, ifMissing: options.ifMissing === true };
+  const subWriteOptions: ReadmeWriteOptions = { ...rootWriteOptions, mode: subMode };
 
   if (!fs.existsSync(currentPath) || !fs.statSync(currentPath).isDirectory()) throw new Error(`Project path not found: ${currentPath}`);
 
@@ -198,7 +202,7 @@ ${rendered}
       repositoryUrl,
       '   ',
       extraData,
-      subMode
+      subWriteOptions
     );
     // The subdirectory tree is rendered with a '   ' prefix so it sits one
     // level deep in isolation. Strip those three spaces here so the parent
@@ -225,7 +229,7 @@ ${rendered}
             repositoryUrl,
             '   ',
             extraData,
-            subMode
+            subWriteOptions
           );
         }
       });
@@ -262,7 +266,7 @@ ${extraData.root_body}
 ${directoryTree ? '## Directory Tree\n' + directoryTree : ''}
 ${extraData.root_footer}
 `;
-  writeReadmeFile(currentPath, buildReadmeData, rootMode);
+  writeReadmeFile(currentPath, buildReadmeData, rootWriteOptions);
 };
 
 /**

@@ -49,6 +49,8 @@ test('parseCliOptions defaults every flag to off', () => {
     help: false,
     dryRun: false,
     rootOnly: false,
+    force: false,
+    ifMissing: false,
     path: undefined,
     config: undefined
   });
@@ -59,12 +61,16 @@ test('parseCliOptions reads long and short forms', () => {
     help: true,
     dryRun: false,
     rootOnly: false,
+    force: false,
+    ifMissing: false,
     path: undefined,
     config: undefined
   });
   assert.strictEqual(parseCliOptions(['-h']).help, true);
   assert.strictEqual(parseCliOptions(['--dry-run']).dryRun, true);
   assert.strictEqual(parseCliOptions(['--root-only']).rootOnly, true);
+  assert.strictEqual(parseCliOptions(['--force']).force, true);
+  assert.strictEqual(parseCliOptions(['--if-missing']).ifMissing, true);
   assert.strictEqual(parseCliOptions(['--path', './pkg']).path, './pkg');
   assert.strictEqual(parseCliOptions(['-p', './pkg']).path, './pkg');
   assert.strictEqual(parseCliOptions(['--config', 'a.js']).config, 'a.js');
@@ -208,7 +214,7 @@ test('subdirectory trees use the same connectors and last-child rule as the root
   fs.writeFileSync(path.join(root, 'beta', 'b.txt'), '');
 
   try {
-    captureOutput(() => main(['--path', root]));
+    captureOutput(() => main(['--path', root, '--force']));
 
     const rootReadme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
     // Root tree: two non-last directory connectors and one last child.
@@ -259,7 +265,7 @@ test('generated trees match the issue #82 fixture', () => {
   };
 
   try {
-    captureOutput(() => main(['--path', root]));
+    captureOutput(() => main(['--path', root, '--force']));
 
     const rootTree = extractTree(fs.readFileSync(path.join(root, 'README.md'), 'utf8'));
     const expectedRootTree = [
