@@ -8,6 +8,7 @@ import figletLib from 'figlet';
 import buildReadme from './buildReadme';
 import { parseCliOptions, usage, type CliOptions } from './cli';
 import { listFilteredFiles } from './filterFiles';
+import { renderTreeRows, type TreeEntry } from './tree';
 import type { ExtraData } from './types';
 import { writeReadmeFile, type ReadmeWriteMode } from './writeReadme';
 
@@ -138,75 +139,90 @@ ${rendered}
   if (extraData.ignore_files.length > 0) console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
 
   const files = listFilteredFiles(currentPath, extraData);
-  const directory: string[] = [];
-  const currentFiles: string[] = [];
-  // Map each subdirectory name to its rendered tree text so it can be nested
-  // under that directory in the parent tree instead of being dumped at the bottom.
-  const subDirectoryTreeMap: Record<string, string> = {};
+  const entries: TreeEntry[] = files.map((file) => {
+    const filePath = path.resolve(currentPath, file);
+    const stats = fs.statSync(filePath);
+    return { name: file, isDirectory: stats.isDirectory() };
+  });
+  const fileEntries = entries.filter((entry) => !entry.isDirectory);
+  const directoryEntries = entries.filter((entry) => entry.isDirectory);
+  // Map each subdirectory name to the nested lines from its own tree so they
+  // can be inlined under the parent's directory entry rather than dumped at
+  // the bottom of the root tree.
+  const subDirectoryTreeMap: Record<string, string[]> = {};
 
   let directoryFileList = '';
   let currentFilesList = '';
-  let directoryTree = `\`\`\`\n` + repositoryName + '/\n';
 
-  // identify if the files are directories or files
-  files.map((file) => {
-    const filePath = path.resolve(currentPath, file);
-    const stats = fs.statSync(filePath);
-    if (stats.isDirectory()) {
-      directory.push(file);
-      directoryFileList += ` - [${file}/](./${file}/)\r`;
-      const addToTree = buildReadme(file, filePath + '/', repositoryName + ' / ' + file, figlet, licenseBadge, '', repositoryUrl, '   ', extraData, subMode);
-      subDirectoryTreeMap[file] = addToTree ?? '';
-      // Second-level walk: filter here too, otherwise an ignored directory
-      // would still get a README generated for it.
-      const subDirectoryFiles = listFilteredFiles(filePath + '/', extraData);
-      if (subDirectoryFiles.length > 0)
-        subDirectoryFiles.map((subDirectoryFile) => {
-          const subDirectoryPath = path.resolve(filePath + '/' + subDirectoryFile);
-          const subDirectoryPathStats = fs.statSync(subDirectoryPath);
-          if (subDirectoryPathStats.isDirectory()) {
-            buildReadme(
-              subDirectoryFile,
-              filePath + '/' + subDirectoryFile + '/',
-              repositoryName + ' / ' + file + ' / ' + subDirectoryFile,
-              figlet,
-              licenseBadge,
-              '',
-              repositoryUrl,
-              '   ',
-              extraData,
-              subMode
-            );
-          }
-        });
-    } else {
-      currentFiles.push(file);
-      currentFilesList += ` - [${file}](./${file})\n`;
-    }
-    return { file, type: stats.isDirectory() ? 'directory' : 'file' };
+  // Walk the same directory listing once, building the link list, the
+  // subdirectory tree map and the grandchild README list in lock-step so
+  // the rendering helpers stay the only place that knows about box-drawing
+  // characters.
+  directoryEntries.forEach((entry) => {
+    const filePath = path.resolve(currentPath, entry.name);
+    directoryFileList += ` - [${entry.name}/](./${entry.name}/)\r`;
+    const subTree = buildReadme(
+      entry.name,
+      filePath + '/',
+      repositoryName + ' / ' + entry.name,
+      figlet,
+      licenseBadge,
+      '',
+      repositoryUrl,
+      '   ',
+      extraData,
+      subMode
+    );
+    // The subdirectory tree is rendered with a '   ' prefix so it sits one
+    // level deep in isolation. Strip those three spaces here so the parent
+    // can prepend its own continuation indent cleanly when nesting.
+    subDirectoryTreeMap[entry.name] = (subTree ?? '')
+      .split('\n')
+      .filter((line) => line.length > 0)
+      .map((line) => line.replace(/^ {3}/, ''));
+    // Second-level walk: filter here too, otherwise an ignored directory
+    // would still get a README generated for it.
+    const subDirectoryFiles = listFilteredFiles(filePath + '/', extraData);
+    if (subDirectoryFiles.length > 0)
+      subDirectoryFiles.forEach((subDirectoryFile) => {
+        const subDirectoryPath = path.resolve(filePath + '/' + subDirectoryFile);
+        const subDirectoryPathStats = fs.statSync(subDirectoryPath);
+        if (subDirectoryPathStats.isDirectory()) {
+          buildReadme(
+            subDirectoryFile,
+            filePath + '/' + subDirectoryFile + '/',
+            repositoryName + ' / ' + entry.name + ' / ' + subDirectoryFile,
+            figlet,
+            licenseBadge,
+            '',
+            repositoryUrl,
+            '   ',
+            extraData,
+            subMode
+          );
+        }
+      });
   });
-  currentFiles.forEach((element) => {
-    directoryTree += `│   ${element}\n`;
+  fileEntries.forEach((entry) => {
+    currentFilesList += ` - [${entry.name}](./${entry.name})\n`;
   });
-  directory.forEach((element, index) => {
-    const isLast = index === directory.length - 1;
-    const connector = isLast ? '└───' : '├───';
-    // Children of a non-last directory are drawn with a `│` so the parent's
-    // connector column continues; children of the last directory use blanks.
+  // The root tree and the subdirectory trees share the same renderer, so
+  // connectors and last-child logic stay consistent. Files are rendered
+  // first to match the existing root layout, then directories with their
+  // subtrees inlined under each one. The file and directory lists are
+  // rendered as separate batches so each group closes on its own last
+  // child (`└───`), which keeps the visual layout intact.
+  const treeLines: string[] = [`${repositoryName}/`];
+  renderTreeRows(fileEntries).forEach((line) => treeLines.push(line));
+  const directoryLines = renderTreeRows(directoryEntries);
+  directoryEntries.forEach((entry, index) => {
+    const isLast = index === directoryEntries.length - 1;
     const childIndent = isLast ? '    ' : '│   ';
-    directoryTree += `${connector} ${element}/\n`;
-    // Nest the subdirectory's tree immediately under its directory entry so
-    // files from different subdirectories are no longer mixed at the bottom.
-    const subTree = subDirectoryTreeMap[element] || '';
-    subTree.split('\n').forEach((line) => {
-      if (line === '') return;
-      // buildReadme prefixes each of its lines with three spaces so that the
-      // subdirectory's tree lines up one level deep. Replace that prefix with
-      // the parent's child indent so the lines sit under the right connector.
-      directoryTree += `${childIndent}${line.replace(/^ {3}/, '')}\n`;
-    });
+    treeLines.push(directoryLines[index]);
+    const subTreeLines = subDirectoryTreeMap[entry.name] || [];
+    subTreeLines.forEach((line) => treeLines.push(`${childIndent}${line}`));
   });
-  directoryTree += `\`\`\``;
+  const directoryTree = `\`\`\`\n${treeLines.join('\n')}\n\`\`\``;
   const buildReadmeData = `
 ${licenseBadge}${licenseBadge ? '\n' : ''}${extraData.root_license}
 
