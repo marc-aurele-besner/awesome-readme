@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Rewrote the root `README.md` as clear, hand-authored product documentation
+  covering installation, usage, CLI options, configuration, preservation
+  markers, and examples. The documentation now lives outside the generated
+  region so regeneration keeps it intact, and the duplicated config reference
+  was removed from `awesome-readme.config.js`. Addresses #91.
 - Renovate now only automerges patch-level bumps of `devDependencies`.
   The previous rule mixed update types into `matchDepTypes`, which made
   it effectively allow every devDep bump of every severity; minor and
