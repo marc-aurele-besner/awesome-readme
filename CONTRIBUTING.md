@@ -30,9 +30,18 @@ will fix most lint and formatting complaints for you.
 > `npm run typecheck` instead. When typescript-eslint gains TS >=7.1 support, the
 > ignore entry in `eslint.config.js` should be removed.
 
-3. Document the new features, or functionality in README.md
+3. Document the new features or behavior changes:
 
-4. Increase the version numbers in package.json to the new version that this Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
+   - Update [`README.md`](./README.md) if the change affects how users
+     install, configure, or run the tool.
+   - Add a bullet to the `[Unreleased]` section of
+     [`CHANGELOG.md`](./CHANGELOG.md) so it lands in the next release
+     notes. Group entries under `Added`, `Changed`, `Fixed`, `Removed`,
+     and `Dependencies`, in that order.
+
+Version bumps and npm publishing happen at release time, not per PR. The
+release process is documented in [`RELEASING.md`](./RELEASING.md); the
+versioning scheme is [SemVer](http://semver.org/).
 
 ## Code of Conduct
 
