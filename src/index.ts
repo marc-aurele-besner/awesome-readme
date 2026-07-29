@@ -48,7 +48,11 @@ const buildMainReadme = (options: Partial<BuildOptions> = {}): void => {
     sub_footer: '',
     ignore_gitFiles: true,
     ignore_gitIgnoreFiles: true,
-    ignore_files: []
+    ignore_files: [],
+    // Built-in defaults (`node_modules/`, `dist/`, `coverage/`, `build/`) are
+    // merged with `ignore_files` unless the config opts out via
+    // `ignore_defaults: false`.
+    ignore_defaults: true
   };
   let figlet = `
 \`\`\`
@@ -86,6 +90,7 @@ ${config.figlet}
     if (config.ignore_gitFiles !== undefined) extraData.ignore_gitFiles = config.ignore_gitFiles;
     if (config.ignore_gitIgnoreFiles !== undefined) extraData.ignore_gitIgnoreFiles = config.ignore_gitIgnoreFiles;
     if (config.ignore_files !== undefined && config.ignore_files.length > 0) extraData.ignore_files = config.ignore_files;
+    if (config.ignore_defaults !== undefined) extraData.ignore_defaults = config.ignore_defaults;
     // When `figlet_text` is provided, render it with the figlet package so the
     // user does not have to hand-author the ASCII art. Pre-rendered `figlet`
     // strings still win so existing configs keep working.
@@ -137,6 +142,7 @@ ${rendered}
     console.log('\x1b[33m', 'Using .gitignore to ignore files', '\x1b[0m');
   if (extraData.ignore_gitFiles) console.log('\x1b[33m', 'Ignoring .git files', '\x1b[0m');
   if (extraData.ignore_files.length > 0) console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
+  if (extraData.ignore_defaults) console.log('\x1b[33m', 'Ignoring default directories: node_modules/, dist/, coverage/, build/', '\x1b[0m');
 
   const files = listFilteredFiles(currentPath, extraData);
   const entries: TreeEntry[] = files.map((file) => {
