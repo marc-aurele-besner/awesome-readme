@@ -5,11 +5,11 @@ import * as path from 'path';
 
 import figletLib from 'figlet';
 
-import buildReadme from './buildReadme';
+import buildReadme, { toTreeNodes } from './buildReadme';
 import { parseCliOptions, usage, type CliOptions } from './cli';
-import { listFilteredFiles } from './filterFiles';
-import { renderTreeRows, type TreeEntry } from './tree';
+import { renderTreeLines } from './tree';
 import type { ExtraData } from './types';
+import { walkDirectory, flattenDirectories, DEFAULT_MAX_DEPTH, type DirectoryNode } from './walk';
 import { writeReadmeFile, type ReadmeWriteMode, type ReadmeWriteOptions } from './writeReadme';
 
 const DEFAULT_CONFIG_FILE = 'awesome-readme.config.js';
@@ -56,7 +56,9 @@ const buildMainReadme = (options: Partial<BuildOptions> = {}): void => {
     // Built-in defaults (`node_modules/`, `dist/`, `coverage/`, `build/`) are
     // merged with `ignore_files` unless the config opts out via
     // `ignore_defaults: false`.
-    ignore_defaults: true
+    ignore_defaults: true,
+    // Safety limit for the recursive walk; overridable with `max_depth`.
+    max_depth: DEFAULT_MAX_DEPTH
   };
   // The banner used to ship as a hand-authored "awesome-readme" string. It now
   // starts empty so the auto-generation step below can render a banner from
@@ -96,6 +98,10 @@ ${config.figlet}
     if (config.ignore_gitIgnoreFiles !== undefined) extraData.ignore_gitIgnoreFiles = config.ignore_gitIgnoreFiles;
     if (config.ignore_files !== undefined && config.ignore_files.length > 0) extraData.ignore_files = config.ignore_files;
     if (config.ignore_defaults !== undefined) extraData.ignore_defaults = config.ignore_defaults;
+    // `max_depth` caps how far the recursive walk descends. Anything that is
+    // not a finite, non-negative number is a config mistake rather than a
+    // request to disable the limit, so the default stays in place.
+    if (typeof config.max_depth === 'number' && Number.isFinite(config.max_depth) && config.max_depth >= 0) extraData.max_depth = Math.floor(config.max_depth);
     // `figlet_auto` opt-out. Defaults to true above; explicit `false` keeps
     // the banner empty even when nothing else supplies one.
     if (config.figlet_auto !== undefined) figletAuto = config.figlet_auto !== false;
@@ -169,90 +175,56 @@ ${rendered}
   if (extraData.ignore_files.length > 0) console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
   if (extraData.ignore_defaults) console.log('\x1b[33m', 'Ignoring default directories: node_modules/, dist/, coverage/, build/', '\x1b[0m');
 
-  const files = listFilteredFiles(currentPath, extraData);
-  const entries: TreeEntry[] = files.map((file) => {
-    const filePath = path.resolve(currentPath, file);
-    const stats = fs.statSync(filePath);
-    return { name: file, isDirectory: stats.isDirectory() };
-  });
-  const fileEntries = entries.filter((entry) => !entry.isDirectory);
-  const directoryEntries = entries.filter((entry) => entry.isDirectory);
-  // Map each subdirectory name to the nested lines from its own tree so they
-  // can be inlined under the parent's directory entry rather than dumped at
-  // the bottom of the root tree.
-  const subDirectoryTreeMap: Record<string, string[]> = {};
+  const tree = walkDirectory(currentPath, extraData);
+  const truncated = flattenDirectories(tree).filter((node) => node.truncated);
+  if (truncated.length > 0)
+    console.log(
+      '\x1b[33m',
+      `Stopped descending at ${truncated.length} director${truncated.length === 1 ? 'y' : 'ies'} (max_depth: ${extraData.max_depth}). Raise max_depth in the config to go deeper.`,
+      '\x1b[0m'
+    );
 
   let directoryFileList = '';
   let currentFilesList = '';
+  tree.directories.forEach((child) => {
+    directoryFileList += ` - [${child.name}/](./${child.name}/)\r`;
+  });
+  tree.files.forEach((file) => {
+    currentFilesList += ` - [${file}](./${file})\n`;
+  });
 
-  // Walk the same directory listing once, building the link list, the
-  // subdirectory tree map and the grandchild README list in lock-step so
-  // the rendering helpers stay the only place that knows about box-drawing
-  // characters.
-  directoryEntries.forEach((entry) => {
-    const filePath = path.resolve(currentPath, entry.name);
-    directoryFileList += ` - [${entry.name}/](./${entry.name}/)\r`;
-    const subTree = buildReadme(
-      entry.name,
-      filePath + '/',
-      repositoryName + ' / ' + entry.name,
-      figlet,
-      licenseBadge,
-      '',
-      repositoryUrl,
-      '   ',
-      extraData,
-      subWriteOptions
-    );
-    // The subdirectory tree is rendered with a '   ' prefix so it sits one
-    // level deep in isolation. Strip those three spaces here so the parent
-    // can prepend its own continuation indent cleanly when nesting.
-    subDirectoryTreeMap[entry.name] = (subTree ?? '')
-      .split('\n')
-      .filter((line) => line.length > 0)
-      .map((line) => line.replace(/^ {3}/, ''));
-    // Second-level walk: filter here too, otherwise an ignored directory
-    // would still get a README generated for it.
-    const subDirectoryFiles = listFilteredFiles(filePath + '/', extraData);
-    if (subDirectoryFiles.length > 0)
-      subDirectoryFiles.forEach((subDirectoryFile) => {
-        const subDirectoryPath = path.resolve(filePath + '/' + subDirectoryFile);
-        const subDirectoryPathStats = fs.statSync(subDirectoryPath);
-        if (subDirectoryPathStats.isDirectory()) {
-          buildReadme(
-            subDirectoryFile,
-            filePath + '/' + subDirectoryFile + '/',
-            repositoryName + ' / ' + entry.name + ' / ' + subDirectoryFile,
-            figlet,
-            licenseBadge,
-            '',
-            repositoryUrl,
-            '   ',
-            extraData,
-            subWriteOptions
-          );
-        }
+  /**
+   * Emit one README per directory, at any depth.
+   *
+   * The walk used to be unrolled by hand for exactly two levels, so a
+   * `src/a/b/` directory never got a README and never showed up in a tree.
+   * Recursing over the walked nodes means depth is bounded by `max_depth`
+   * alone.
+   */
+  const emitSubReadmes = (parent: DirectoryNode, parentTitle: string): void => {
+    parent.directories.forEach((child) => {
+      const title = `${parentTitle} / ${child.name}`;
+      buildReadme({
+        node: child,
+        title,
+        figlet,
+        licenseBadge,
+        // Direct children link back to the repository; deeper directories link
+        // to their parent's README, which is the actual "previous" page.
+        previousUrl: child.depth === 1 ? repositoryUrl : '../README.md',
+        prefix: '   ',
+        extraData,
+        writeOptions: subWriteOptions
       });
-  });
-  fileEntries.forEach((entry) => {
-    currentFilesList += ` - [${entry.name}](./${entry.name})\n`;
-  });
-  // The root tree and the subdirectory trees share the same renderer, so
-  // connectors and last-child logic stay consistent. Files are rendered
-  // first to match the existing root layout, then directories with their
-  // subtrees inlined under each one. The file and directory lists are
-  // rendered as separate batches so each group closes on its own last
-  // child (`└───`), which keeps the visual layout intact.
-  const treeLines: string[] = [`${repositoryName}/`];
-  renderTreeRows(fileEntries).forEach((line) => treeLines.push(line));
-  const directoryLines = renderTreeRows(directoryEntries);
-  directoryEntries.forEach((entry, index) => {
-    const isLast = index === directoryEntries.length - 1;
-    const childIndent = isLast ? '    ' : '│   ';
-    treeLines.push(directoryLines[index]);
-    const subTreeLines = subDirectoryTreeMap[entry.name] || [];
-    subTreeLines.forEach((line) => treeLines.push(`${childIndent}${line}`));
-  });
+      emitSubReadmes(child, title);
+    });
+  };
+  emitSubReadmes(tree, repositoryName);
+
+  // One renderer, one walked tree: the root README and every subdirectory
+  // README now draw the same structure, so connectors, ordering and nesting
+  // cannot drift apart between them at any depth.
+  const treeLines: string[] = [`${repositoryName}/`, ...renderTreeLines(toTreeNodes(tree))];
   const directoryTree = `\`\`\`\n${treeLines.join('\n')}\n\`\`\``;
   const buildReadmeData = `
 ${licenseBadge}${licenseBadge ? '\n' : ''}${extraData.root_license}
