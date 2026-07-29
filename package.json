@@ -13,7 +13,7 @@
   },
   "scripts": {
     "awesome-readme": "node ./dist/index.js",
-    "lint": "find src -name '*.js' -type f -exec eslint -- {} +",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "lint:fix": "prettier --write \"src/**/*.{js,ts}\"",
     "format:check": "prettier --check \"src/**/*.{js,ts}\"",

@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-build:
-    name: Lint & build
+  verify:
+    name: Lint, typecheck, build & test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,5 +29,13 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      # TypeScript sources are not covered by ESLint (typescript-eslint does not
+      # support TS 7 yet), so tsc is what actually gates type errors. See #79.
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Build
         run: npm run build
+
+      - name: Test
+        run: npm test

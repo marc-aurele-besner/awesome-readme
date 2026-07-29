@@ -10,13 +10,24 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 1. Open a issue first or pickup a existing issue, to not start working on improvement that we may judge out of scope for this project
 
-2. Ensure to run linter and ensure the result of your changes can be build without errors
+2. Run the same checks CI runs, and make sure they all pass:
 
 ```
-npm run lint:fix
-
-npm run build
+npm run lint          # ESLint over JavaScript files
+npm run format:check  # Prettier formatting
+npm run typecheck     # tsc --noEmit, catches type errors in src/
+npm run build         # compile src/ to dist/
+npm test              # build, then run the test suite
 ```
+
+`npm run lint:fix` (Prettier `--write`) will fix most formatting complaints for you.
+
+> **Note on TypeScript linting:** ESLint only covers `.js` files here. The project
+> builds with TypeScript 7, and `typescript-eslint` does not support the TS 7 API yet
+> ([typescript-eslint#10940](https://github.com/typescript-eslint/typescript-eslint/issues/10940)),
+> so `src/**/*.ts` is excluded from ESLint. Type errors in `src/` are caught by
+> `npm run typecheck` instead. When typescript-eslint gains TS >=7.1 support, the
+> ignore entry in `eslint.config.js` should be removed.
 
 3. Document the new features, or functionality in README.md
 
