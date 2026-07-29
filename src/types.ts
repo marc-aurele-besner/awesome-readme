@@ -10,4 +10,9 @@ export interface ExtraData {
   ignore_gitFiles: boolean;
   ignore_gitIgnoreFiles: boolean;
   ignore_files: string[];
+  // Whether the built-in list of default ignore patterns (node_modules,
+  // dist, coverage, build) should be merged with the user-provided
+  // `ignore_files` patterns. Defaults to true; set to false to opt out
+  // and only honour patterns from the config.
+  ignore_defaults: boolean;
 }

@@ -95,7 +95,12 @@ module.exports = {
     sub_footer: \`## Don't hesitate to contribute to this project.\`,
     ignore_gitFiles: true,
     ignore_gitIgnoreFiles: true,
-    ignore_files: ['.prettierignore']
+    // \`ignore_files\` accepts gitignore-style globs (\`*.log\`, \`dist/\`). On top of
+    // what is listed here, a small set of defaults (node_modules/, dist/,
+    // coverage/, build/) is merged in automatically; set \`ignore_defaults\` to
+    // false to opt out.
+    ignore_files: ['.prettierignore'],
+    ignore_defaults: true
 }
 \`\`\`
 `,
@@ -106,5 +111,10 @@ module.exports = {
   sub_footer: `## Don't hesitate to contribute to this project.`,
   ignore_gitFiles: true,
   ignore_gitIgnoreFiles: true,
-  ignore_files: ['.prettierignore']
+  // `ignore_files` accepts gitignore-style globs (`*.log`, `dist/`). On top of
+  // what is listed here, a small set of defaults (node_modules/, dist/,
+  // coverage/, build/) is merged in automatically; set `ignore_defaults` to
+  // false to opt out.
+  ignore_files: ['.prettierignore'],
+  ignore_defaults: true
 };

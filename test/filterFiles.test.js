@@ -4,12 +4,16 @@ const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
 
-const { filterFiles, filterEntries, listFilteredFiles } = require('../dist/filterFiles');
+const { filterFiles, filterEntries, listFilteredFiles, mergeIgnorePatterns } = require('../dist/filterFiles');
 
 const options = (overrides = {}) => ({
   ignore_gitFiles: true,
   ignore_gitIgnoreFiles: true,
   ignore_files: [],
+  // Tests opt out of the built-in defaults so the existing gitignore-only
+  // assertions cannot collide with `node_modules/`, `dist/`, etc. The default
+  // behaviour is covered by the dedicated tests at the bottom of this file.
+  ignore_defaults: false,
   ...overrides
 });
 
@@ -159,4 +163,99 @@ test('listFilteredFiles honours gitignore glob patterns against the filesystem',
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+// Coverage for #87: `ignore_files` is supposed to accept gitignore-style
+// globs (`*.log`, `dist/`) rather than only exact filenames.
+test('filterFiles accepts glob patterns in ignore_files', () => {
+  const files = ['app.log', 'main.ts', 'debug.log'];
+
+  assert.deepStrictEqual(filterFiles(files, options({ ignore_files: ['*.log'] })), ['main.ts']);
+});
+
+// Directory-only patterns should only match directories, so a same-named
+// file stays in the listing. `listFilteredFiles` is the entry point used by
+// the rest of the CLI so it is exercised here.
+test('listFilteredFiles honours directory-only patterns from ignore_files', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-'));
+  fs.mkdirSync(path.join(root, 'dist'));
+  fs.writeFileSync(path.join(root, 'dist', 'bundle.js'), '');
+  // Sibling file whose name happens to match the directory pattern, so the
+  // filter has to distinguish directories from files.
+  fs.writeFileSync(path.join(root, 'dist.txt'), '');
+  fs.writeFileSync(path.join(root, 'README.md'), '');
+
+  try {
+    const files = listFilteredFiles(root, options({ ignore_files: ['dist/'] }));
+
+    assert.deepStrictEqual(files.sort(), ['README.md', 'dist.txt']);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Negation in `ignore_files` should also work: a `!foo` pattern re-includes
+// an entry that an earlier glob would have excluded.
+test('filterFiles honours negation patterns in ignore_files', () => {
+  const files = ['dist', 'dist-keep.md'];
+
+  assert.deepStrictEqual(filterFiles(files, options({ ignore_files: ['dist*', '!dist-keep.md'] })), ['dist-keep.md']);
+});
+
+// Built-in defaults: with `ignore_defaults: true` (the production default),
+// common build/deps directories are filtered out automatically. Tests opt
+// out of defaults via the `options()` helper so the assertions above stay
+// focused on the rule under test.
+test('filterFiles applies the built-in defaults when ignore_defaults is true', () => {
+  const files = ['node_modules', 'dist', 'coverage', 'build', 'src', 'README.md'];
+
+  assert.deepStrictEqual(filterFiles(files, options({ ignore_defaults: true })).sort(), ['README.md', 'src']);
+});
+
+// Opt-out: `ignore_defaults: false` skips the built-in list, leaving only
+// the user-provided `ignore_files` patterns.
+test('filterFiles honours ignore_defaults: false', () => {
+  const files = ['node_modules', 'dist', 'secret.txt', 'README.md'];
+
+  assert.deepStrictEqual(
+    filterFiles(files, options({ ignore_defaults: false, ignore_files: ['secret.txt'] })).sort(),
+    ['README.md', 'dist', 'node_modules']
+  );
+});
+
+// End-to-end coverage: a generated README should not list `node_modules`
+// when the project has no `.gitignore` and no explicit `ignore_files`. This
+// is the user-facing behaviour the issue calls out.
+test('listFilteredFiles filters out node_modules by default', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'awesome-readme-'));
+  fs.mkdirSync(path.join(root, 'node_modules'));
+  fs.writeFileSync(path.join(root, 'node_modules', 'pkg.js'), '');
+  fs.writeFileSync(path.join(root, 'README.md'), '');
+
+  try {
+    const files = listFilteredFiles(root, options({ ignore_defaults: true }));
+
+    assert.deepStrictEqual(files, ['README.md']);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// `mergeIgnorePatterns` deduplicates and keeps the user list on top.
+test('mergeIgnorePatterns combines user patterns with defaults without duplicates', () => {
+  const merged = mergeIgnorePatterns(['.prettierignore', 'dist/'], true);
+
+  assert.deepStrictEqual(merged, ['.prettierignore', 'dist/', 'node_modules/', 'coverage/', 'build/']);
+});
+
+test('mergeIgnorePatterns returns only the user list when defaults are disabled', () => {
+  const merged = mergeIgnorePatterns(['.prettierignore'], false);
+
+  assert.deepStrictEqual(merged, ['.prettierignore']);
+});
+
+test('mergeIgnorePatterns deduplicates overlapping patterns', () => {
+  const merged = mergeIgnorePatterns(['dist/', 'dist/'], true);
+
+  assert.deepStrictEqual(merged, ['dist/', 'node_modules/', 'coverage/', 'build/']);
 });
