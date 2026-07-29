@@ -1,0 +1,10 @@
+{
+  "name": "with-config",
+  "version": "0.1.0",
+  "description": "Example that overrides the auto-generated figlet, supplies custom headers/footers, and adds an ignore_files glob.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/example/with-config.git"
+  }
+}
