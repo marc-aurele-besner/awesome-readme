@@ -7,6 +7,7 @@ import figletLib from 'figlet';
 
 import buildReadme, { toTreeNodes } from './buildReadme';
 import { parseCliOptions, usage, type CliOptions } from './cli';
+import { parseDirectoryOverrides, getDirectoryKey, mergeOverride } from './directoryOverrides';
 import { renderTreeLines } from './tree';
 import type { ExtraData } from './types';
 import { walkDirectory, flattenDirectories, DEFAULT_MAX_DEPTH, type DirectoryNode } from './walk';
@@ -75,10 +76,17 @@ const buildMainReadme = (options: Partial<BuildOptions> = {}): void => {
   // An explicit `--config` must exist; the default file stays optional.
   const configPath = options.config ? path.resolve(options.config) : path.join(currentPath, DEFAULT_CONFIG_FILE);
   if (options.config && !fs.existsSync(configPath)) throw new Error(`Config file not found: ${configPath}`);
-  if (fs.existsSync(configPath)) {
-    // if exists, read the file
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const config = require(configPath);
+  // Read the config once so both the field-by-field parsing below and the
+  // per-directory `directories` lookup see the same object. Hoisted out of
+  // the `if` block so an absent config file still yields `undefined` rather
+  // than a name error. The wider type mirrors what the previous
+  // `const config = require(configPath)` declaration produced — the
+  // field-by-field reads below rely on `undefined` checks and truthiness,
+  // and tight typing would force a cast at every line without changing
+  // the runtime behaviour.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any
+  const config: any = fs.existsSync(configPath) ? require(configPath) : undefined;
+  if (config !== undefined) {
     if (config.figlet) {
       figlet = `
 \`\`\`
@@ -175,6 +183,13 @@ ${rendered}
   if (extraData.ignore_files.length > 0) console.log('\x1b[33m', 'Ignoring files: ', '\x1b[0m', extraData.ignore_files.toString());
   if (extraData.ignore_defaults) console.log('\x1b[33m', 'Ignoring default directories: node_modules/, dist/, coverage/, build/', '\x1b[0m');
 
+  // Per-directory overrides: keys are project-root-relative POSIX paths and
+  // matching is exact (no prefix cascade). Parsed once up front so a bad
+  // config fails fast before any files are written. The map is empty when
+  // the config does not declare `directories`, which keeps the no-config
+  // path identical to today.
+  const directoryOverrides = parseDirectoryOverrides(config?.directories, currentPath);
+
   const tree = walkDirectory(currentPath, extraData);
   const truncated = flattenDirectories(tree).filter((node) => node.truncated);
   if (truncated.length > 0)
@@ -204,6 +219,12 @@ ${rendered}
   const emitSubReadmes = (parent: DirectoryNode, parentTitle: string): void => {
     parent.directories.forEach((child) => {
       const title = `${parentTitle} / ${child.name}`;
+      // Look up a per-directory override by its project-root-relative POSIX
+      // path. Children of an overridden directory inherit the global
+      // `sub_*` fields unless they have their own entry — the lookup uses
+      // `getDirectoryKey`, not `parent`'s key, so the cascade is exact.
+      const override = directoryOverrides.get(getDirectoryKey(child, currentPath));
+      const childExtraData = mergeOverride(extraData, override);
       buildReadme({
         node: child,
         title,
@@ -213,7 +234,7 @@ ${rendered}
         // to their parent's README, which is the actual "previous" page.
         previousUrl: child.depth === 1 ? repositoryUrl : '../README.md',
         prefix: '   ',
-        extraData,
+        extraData: childExtraData,
         writeOptions: subWriteOptions
       });
       emitSubReadmes(child, title);
